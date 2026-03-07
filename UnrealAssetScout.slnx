@@ -1,0 +1,13 @@
+<Solution>
+  <Configurations>
+    <Platform Name="Any CPU" />
+    <Platform Name="x64" />
+  </Configurations>
+  <Folder Name="/Solution Items/">
+    <File Path="UnrealAssetScout.sln.DotSettings" />
+  </Folder>
+  <Project Path="CUE4Parse/CUE4Parse-Conversion/CUE4Parse-Conversion.csproj" />
+  <Project Path="CUE4Parse/CUE4Parse/CUE4Parse.csproj" />
+  <Project Path="UnrealAssetScout.Tests/UnrealAssetScout.Tests.csproj" />
+  <Project Path="UnrealAssetScout/UnrealAssetScout.csproj" />
+</Solution>

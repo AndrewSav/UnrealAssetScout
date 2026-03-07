@@ -1,0 +1,19 @@
+﻿<wpf:ResourceDictionary xml:space="preserve" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" xmlns:s="clr-namespace:System;assembly=mscorlib" xmlns:ss="urn:shemas-jetbrains-com:settings-storage-xaml" xmlns:wpf="http://schemas.microsoft.com/winfx/2006/xaml/presentation">
+	<s:Boolean x:Key="/Default/UserDictionary/Words/=locmeta/@EntryIndexedValue">True</s:Boolean>
+	<s:Boolean x:Key="/Default/UserDictionary/Words/=locres/@EntryIndexedValue">True</s:Boolean>
+	<s:Boolean x:Key="/Default/UserDictionary/Words/=Oodle/@EntryIndexedValue">True</s:Boolean>
+<s:Boolean x:Key="/Default/UserDictionary/Words/=unrealassetscout/@EntryIndexedValue">True</s:Boolean>
+	<s:Boolean x:Key="/Default/UserDictionary/Words/=stddev/@EntryIndexedValue">True</s:Boolean>
+	<s:Boolean x:Key="/Default/UserDictionary/Words/=stinfo/@EntryIndexedValue">True</s:Boolean>
+<s:Boolean x:Key="/Default/UserDictionary/Words/=uasset/@EntryIndexedValue">True</s:Boolean>
+<s:Boolean x:Key="/Default/UserDictionary/Words/=ubulk/@EntryIndexedValue">True</s:Boolean>
+<s:Boolean x:Key="/Default/UserDictionary/Words/=uexp/@EntryIndexedValue">True</s:Boolean>
+	<s:Boolean x:Key="/Default/UserDictionary/Words/=UFMOD/@EntryIndexedValue">True</s:Boolean>
+<s:Boolean x:Key="/Default/UserDictionary/Words/=umap/@EntryIndexedValue">True</s:Boolean>
+	<s:Boolean x:Key="/Default/UserDictionary/Words/=upipelinecache/@EntryIndexedValue">True</s:Boolean>
+<s:Boolean x:Key="/Default/UserDictionary/Words/=uptnl/@EntryIndexedValue">True</s:Boolean>
+	<s:Boolean x:Key="/Default/UserDictionary/Words/=ushaderbytecode/@EntryIndexedValue">True</s:Boolean>
+	<s:Boolean x:Key="/Default/UserDictionary/Words/=ushadercode/@EntryIndexedValue">True</s:Boolean>
+<s:Boolean x:Key="/Default/UserDictionary/Words/=Usmap/@EntryIndexedValue">True</s:Boolean>
+	<s:Boolean x:Key="/Default/UserDictionary/Words/=Welford_0027s/@EntryIndexedValue">True</s:Boolean>
+<s:Boolean x:Key="/Default/UserDictionary/Words/=wwise/@EntryIndexedValue">True</s:Boolean></wpf:ResourceDictionary>

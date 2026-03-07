@@ -1,0 +1,8 @@
+{
+  "profiles": {
+    "UnrealAssetScout": {
+      "commandName": "Project",
+      "commandLineArgs": "export json --output C:\\_pakdumps\\temp --paks \"D:\\Steam\\steamapps\\common\\Laysara Summit Kingdom\\AS\\Content\\Paks\" --game GAME_UE4_27"
+    }
+  }
+}

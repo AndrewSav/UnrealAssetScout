@@ -1,0 +1,45 @@
+expr            ::= or_expr
+
+or_expr         ::= and_expr ( or_op and_expr )*
+and_expr        ::= unary_expr ( and_op unary_expr )*
+unary_expr      ::= not_op unary_expr
+                  | primary
+
+primary         ::= "(" expr ")"
+                  | comparison
+                  | identifier
+comparison      ::= value comp_op value
+
+value           ::= number
+                  | identifier
+                  | keyword
+
+keyword         ::= "%t"
+                  | "%types"
+                  | "%e"
+                  | "%exports"
+
+comp_op         ::= "="
+                  | "!="
+                  | ">"
+                  | "<"
+                  | ">="
+                  | "<="
+
+and_op          ::= "and"
+                  | "&"
+                  | "&&"
+
+or_op           ::= "or"
+                  | "|"
+                  | "||"
+
+not_op          ::= "!"
+                  | "not"
+                  | "~"
+
+number          ::= digit+
+
+identifier      ::= ident_start ident_continue*
+ident_start     ::= letter | "_"
+ident_continue  ::= letter | digit | "_" | "-" 
