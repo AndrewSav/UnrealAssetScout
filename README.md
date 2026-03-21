@@ -39,6 +39,7 @@ UnrealAssetScout is built on top of [CUE4Parse](https://github.com/FabianFG/CUE4
 - Some CUE4Parse-backed exporters can hit parser warnings or errors and still produce partial output or no output for a given asset/package. Those dependency logs are suppressed by default and can be enabled with `--log-libs` when needed for debugging.
 - This repository uses CUE4Parse as a git submodule instead of a NuGet package because the interface changes rapidly.
 - Because that interface changes rapidly, updating the submodule is likely to break UnrealAssetScout until the integration code here is adjusted to match.
+- CUE4Parse has historically had Release-only build breaks, so the GitHub Actions publish workflow intentionally builds the Windows artifact with `Debug` configuration for reliability.
 
 ## Usage
 

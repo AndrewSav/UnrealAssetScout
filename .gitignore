@@ -351,6 +351,7 @@ MigrationBackup/
 .ionide/
 
 settings.local.json
+**/Properties/launchSettings.json
 
 FModel/
 SteamShortcuts/
