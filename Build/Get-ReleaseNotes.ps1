@@ -71,7 +71,7 @@ $changelogUrl = "$trimmedServerUrl/$Repository/blob/$normalizedTag/CHANGELOG.md"
 $releaseNotes = @(
     $contentLines
     ""
-    "[Full changelog]($changelogUrl)"
+    "[Previous changes can be found in full changelog]($changelogUrl)"
 )
 
 [System.IO.File]::WriteAllLines($OutputPath, $releaseNotes)
