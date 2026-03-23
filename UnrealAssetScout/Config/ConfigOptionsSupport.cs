@@ -63,6 +63,8 @@ internal static class ConfigOptionsSupport
         };
         root.Subcommands.Add(listCommand);
         root.Subcommands.Add(exportCommand);
+        var versionOption = root.Options.OfType<VersionOption>().Single();
+        root.Options.Remove(versionOption);
         ConfigureHelpOption(root);
         var helpAction = root.Options.OfType<HelpOption>().Single().Action;
 
