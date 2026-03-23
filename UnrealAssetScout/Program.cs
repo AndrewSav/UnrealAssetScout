@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Text;
+using CUE4Parse_Conversion.Textures.BC;
 using CUE4Parse.Compression;
 using CUE4Parse.Encryption.Aes;
 using CUE4Parse.FileProvider;
@@ -74,6 +75,11 @@ public static class Program
             // CUE4Parse requires this to download zlib and oodle binaries, otherwise some extractions fail because they are absent
             ZlibHelper.Initialize(Path.Combine(exeDir, ZlibHelper.DLL_NAME));
             OodleHelper.Initialize(Path.Combine(exeDir, OodleHelper.OODLE_NAME_CURRENT));
+            var detexPath = Path.Combine(exeDir, DetexHelper.DLL_NAME);
+            if (!File.Exists(detexPath))
+                DetexHelper.LoadDllAsync(detexPath).GetAwaiter().GetResult();
+
+            DetexHelper.Initialize(detexPath);
 
             var provider = new DefaultFileProvider(
                 options.PaksDirectory!,
