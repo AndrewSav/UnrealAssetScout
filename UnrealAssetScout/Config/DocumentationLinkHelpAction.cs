@@ -1,9 +1,10 @@
 using System.CommandLine;
 using System.CommandLine.Invocation;
+
 namespace UnrealAssetScout.Config;
 
-// A small wrapper around System.CommandLine's stock help action that appends a documentation
-// link. Created by ConfigOptionsSupport when configuring the root help option, then invoked by
+// A small wrapper around System.CommandLine's stock help action that appends a documentation link.
+// Created by ConfigOptionsSupport when configuring the root help option, then invoked by
 // System.CommandLine whenever standard help output is displayed for UnrealAssetScout.
 internal sealed class DocumentationLinkHelpAction : SynchronousCommandLineAction
 {
