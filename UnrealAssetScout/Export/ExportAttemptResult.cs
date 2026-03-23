@@ -4,8 +4,8 @@ using System.Collections.Generic;
 namespace UnrealAssetScout.Export;
 
 // Describes whether an exporter succeeded, failed, or declined to handle a file, together with
-// any exported output paths. Returned by simple and graphics exporters to ExportProcessor so the
-// processor can own runtime logging policy while helpers stay focused on export work.
+// any exported output paths. Returned by simple and package-mode exporters to ExportProcessor so
+// the processor can own runtime logging policy while helpers stay focused on export work.
 internal readonly record struct ExportAttemptResult(
     ExportAttemptStatus Status,
     string FailurePath,

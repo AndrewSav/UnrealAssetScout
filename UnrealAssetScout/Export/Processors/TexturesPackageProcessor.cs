@@ -7,10 +7,10 @@ using UnrealAssetScout.Statistics;
 
 namespace UnrealAssetScout.Export.Processors;
 
-// Processes package exports for graphics mode.
-// Created by ExportProcessor.ProcessFiles for ExportMode.Graphics, then passed to
+// Processes package exports for textures mode.
+// Created by ExportProcessor.ProcessFiles for ExportMode.Textures, then passed to
 // ExportProcessor.ProcessPackageMode to export textures and SVG assets from each loaded package.
-internal sealed class GraphicsPackageProcessor(string outputDir, bool verbose, ModeStatsAccumulator modeStats)
+internal sealed class TexturesPackageProcessor(string outputDir, bool verbose, ModeStatsAccumulator modeStats)
     : PackageModeProcessorBase(outputDir, verbose, modeStats)
 {
     protected override ExportAttemptResult TryExport(UObject export, PackageExportContext packageContext) =>
@@ -21,5 +21,5 @@ internal sealed class GraphicsPackageProcessor(string outputDir, bool verbose, M
             _ => ExportAttemptResult.NotHandled()
         };
 
-    protected override string NoExportsReason => "no graphics exports";
+    protected override string NoExportsReason => "no texture exports";
 }

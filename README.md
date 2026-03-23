@@ -22,9 +22,10 @@ Additionally, I wanted it to be reasonably useful as an exploration tool for new
   - `simple` (standalone non-package files from pak/utoc containers; known formats are extracted or parsed, everything else is copied as-is)
   - `raw` (copy every matched file from pak/utoc containers byte-for-byte, including package companions such as `.uexp`, `.ubulk`, and `.uptnl`)
   - `json` (asset exports -> `.json`)
-  - `graphics` (textures -> `.png`)
+  - `textures` (textures and SVG assets -> `.png`)
+  - `models` (conversion-backed meshes, skeletons, materials, and landscapes)
+  - `animations` (conversion-backed animation assets)
   - `audio` (audio assets and MIDI)
-  - `spatial` (conversion-backed meshes, materials, animations, landscapes)
   - `verse` (Verse digests -> `.verse`)
 
 - Optional AES key support for encrypted containers (`--aes` or `--aes-file`)
@@ -80,14 +81,15 @@ These options are defined on the root command and inherited by both `list` and `
 
 ### `export`
 
-- `<mode>`: `Simple`, `Raw`, `Json`, `Graphics`, `Audio`, `Spatial`, or `Verse`
+- `<mode>`: `Simple`, `Raw`, `Json`, `Textures`, `Models`, `Animations`, `Audio`, or `Verse`
 
   - `Simple`: Processes only standalone non-package files from pak/utoc containers. Files with package-related extensions such as `.uasset`, `.umap`, `.uexp`, `.ubulk`, and `.uptnl` are skipped in this mode. Known formats are extracted or parsed; everything else is copied as-is. Companion files such as `.uexp`, `.ubulk`, or `.uptnl` may appear as skipped because they are usually read implicitly when the parent `.uasset` or `.umap` is processed.
   - `Raw`: Copies every matched file entry byte-for-byte to the output directory, including package files and companion files such as `.uasset`, `.umap`, `.uexp`, `.ubulk`, and `.uptnl`. No typed decoding or package-specific skipping is applied in this mode.
   - `Json`: Processes only `.uasset` and `.umap` packages and exports their asset data as `.json`. By default this mode skips the built-in type list documented below unless you override it with `--skip-types`, `--skip-types-file`, or disable it with `--no-skip-types`. While `.uexp`, `.ubulk`, and `.uptnl` may be surfaced as "skipped", they are usually companion data referenced by `.uasset` or `.umap` files and are processed as part of those packages. If world levels are present but not needed, using `--filter "^.*(?<!\.umap)$"` can significantly speed up export by excluding `.umap` packages.
-  - `Graphics`: Processes only `.uasset` and `.umap` packages and targets texture-style assets. Currently this means `UTexture` and `USvgAsset` exports. Some graphics files may also exist as standalone non-package files, in which case they are extracted via `Simple` mode instead.
+  - `Textures`: Processes only `.uasset` and `.umap` packages and targets texture-style assets. Currently this means `UTexture` and `USvgAsset` exports. Some texture-like files may also exist as standalone non-package files, in which case they are extracted via `Simple` mode instead.
+  - `Models`: Processes only `.uasset` and `.umap` packages and targets meshes, skeletons, materials, and landscapes. Currently this means `UMaterialInterface`, `USkeletalMesh`, `USkeleton`, `UStaticMesh`, and `ALandscapeProxy` exports.
+  - `Animations`: Processes only `.uasset` and `.umap` packages and targets animation assets. Currently this means `UAnimSequence`, `UAnimMontage`, and `UAnimComposite` exports.
   - `Audio`: Processes only `.uasset` and `.umap` packages and targets audio and MIDI assets. Currently this means `UExternalSource`, `UAkAudioBank`, `UAkAudioEvent`, `UFMODEvent`, `UFMODBank`, `USoundAtomCueSheet`, `UAtomCueSheet`, `USoundAtomCue`, `UAtomWaveBank`, `UAkMediaAsset`, `UAkAudioEventData`, `UMidiFile`, `USoundWave`, and `UAkMediaAssetData` exports. Some audio files may also exist as standalone non-package files, in which case they are extracted via `Simple` mode instead.
-  - `Spatial`: Processes only `.uasset` and `.umap` packages and targets meshes, materials, animations, and landscapes. Currently this means `UAnimSequence`, `UAnimMontage`, `UAnimComposite`, `UMaterialInterface`, `USkeletalMesh`, `USkeleton`, `UStaticMesh`, and `ALandscapeProxy` exports.
   - `Verse`: Processes only `.uasset` packages and targets Verse digest assets. Currently this means `UVerseDigest` exports.
 
 - `-o`, `--output` (required): `export:` Output directory
@@ -195,7 +197,7 @@ Examples:
 - `UTexture and %exports > 1`
   Matches packages containing textures and more than one total export.
 - `(UTexture or USvgAsset) and not USoundWave`
-  Matches graphics-oriented packages while excluding ones that also contain `USoundWave`.
+  Matches texture-oriented packages while excluding ones that also contain `USoundWave`.
 - `2 < %exports`
   Comparisons can be written with the number on the left as well.
 
@@ -309,13 +311,13 @@ uas.exe `
   --output "D:\Export\Raw"
 ```
 
-Export spatial assets with AES key:
+Export model assets with AES key:
 
 ```powershell
 uas.exe `
-  export spatial `
+  export models `
   --paks "C:\Game\Content\Paks" `
   --game GAME_UE5_3 `
   --aes 0xYOUR64BYTEHEXKEY `
-  --output "D:\Export\Spatial"
+  --output "D:\Export\Models"
 ```

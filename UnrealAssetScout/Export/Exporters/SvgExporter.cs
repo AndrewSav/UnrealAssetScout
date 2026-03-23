@@ -8,7 +8,7 @@ using Svg.Skia;
 namespace UnrealAssetScout.Export.Exporters;
 
 // Exports `USvgAsset` payloads as rendered PNG files.
-// Called by ExportProcessor graphics-mode handlers when an SVG asset should be rasterized into the
+// Called by ExportProcessor textures-mode handlers when an SVG asset should be rasterized into the
 // target output directory.
 internal static class SvgExporter
 {

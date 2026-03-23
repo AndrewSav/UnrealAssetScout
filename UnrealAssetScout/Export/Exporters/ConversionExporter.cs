@@ -11,16 +11,29 @@ using UnrealAssetScout.Package;
 
 namespace UnrealAssetScout.Export.Exporters;
 
-// Exports supported spatial-mode Unreal assets such as meshes, materials, animations, and
-// landscapes to disk via CUE4Parse_Conversion.
-// Called by ExportProcessor spatial-mode handlers when a package export matches one of the
-// supported conversion asset types.
+// Exports supported model- and animation-mode Unreal assets to disk via CUE4Parse_Conversion.
+// Called by package-mode processors such as ModelsPackageProcessor and AnimationsPackageProcessor
+// when a package export matches one of the supported conversion asset types.
 internal static class ConversionExporter
 {
-    internal static ExportAttemptResult TryExport(UObject export, PackageExportContext packageContext, string outputDir)
+    internal static ExportAttemptResult TryExportModel(UObject export, PackageExportContext packageContext, string outputDir)
     {
-        if (export is not (UAnimSequence or UAnimMontage or UAnimComposite or UMaterialInterface or USkeletalMesh or USkeleton or UStaticMesh or ALandscapeProxy))
+        if (export is not (UMaterialInterface or USkeletalMesh or USkeleton or UStaticMesh or ALandscapeProxy))
             return ExportAttemptResult.NotHandled();
+
+        return TryExport(export, packageContext, outputDir);
+    }
+
+    internal static ExportAttemptResult TryExportAnimation(UObject export, PackageExportContext packageContext, string outputDir)
+    {
+        if (export is not (UAnimSequence or UAnimMontage or UAnimComposite))
+            return ExportAttemptResult.NotHandled();
+
+        return TryExport(export, packageContext, outputDir);
+    }
+
+    private static ExportAttemptResult TryExport(UObject export, PackageExportContext packageContext, string outputDir)
+    {
 
         try
         {

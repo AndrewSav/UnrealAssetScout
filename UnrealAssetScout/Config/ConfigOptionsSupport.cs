@@ -237,7 +237,7 @@ internal static class ConfigOptionsSupport
         return new(
             new Argument<ExportMode>("mode")
             {
-                Description = "Export mode: Simple, Raw, Json, Graphics, Audio, Spatial, or Verse"
+                Description = "Export mode: Simple, Raw, Json, Textures, Models, Animations, Audio, or Verse"
             },
             skipTypes,
             skipTypesFile,

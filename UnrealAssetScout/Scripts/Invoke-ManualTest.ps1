@@ -77,7 +77,7 @@ Invoke-TimedStep "list default" @("list", $responseFile, "--log-append")
 Invoke-TimedStep "list types csv" @("list", $responseFile, "--format", "types", "--file", "$Name.csv", "--log-append")
 Invoke-TimedStep "export simple" @("export", "simple", $responseFile, "--output", (Join-Path $dumpRoot "simple"), "--compact", "--log-append")
 Invoke-TimedStep "export json" @("export", "json", $responseFile, "--output", (Join-Path $dumpRoot "json"), "--compact", "--log-append")
-Invoke-TimedStep "export graphics" @("export", "graphics", $responseFile, "--output", (Join-Path $dumpRoot "graphics"), "--compact", "--log-append")
+Invoke-TimedStep "export textures" @("export", "textures", $responseFile, "--output", (Join-Path $dumpRoot "textures"), "--compact", "--log-append")
 
 $runFinishedAt = Get-Date
 Write-TimingLog ("Run finished: {0}" -f $runFinishedAt.ToString("o"))

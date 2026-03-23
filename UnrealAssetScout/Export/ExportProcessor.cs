@@ -49,9 +49,10 @@ public static class ExportProcessor
                     ExportMode.Simple => ext is not ("uasset" or "umap" or "uexp" or "ubulk" or "uptnl") ? (true, "") : (false, "packages are unsupported in simple mode"),
                     ExportMode.Raw => (true, ""),
                     ExportMode.Json => ext is "uasset" or "umap" ? (true, "") : (false, "unsupported extension for json mode"),
-                    ExportMode.Graphics => ext is "uasset" or "umap" ? (true, "") : (false, "unsupported extension for graphics mode"),
+                    ExportMode.Textures => ext is "uasset" or "umap" ? (true, "") : (false, "unsupported extension for textures mode"),
+                    ExportMode.Models => ext is "uasset" or "umap" ? (true, "") : (false, "unsupported extension for models mode"),
+                    ExportMode.Animations => ext is "uasset" or "umap" ? (true, "") : (false, "unsupported extension for animations mode"),
                     ExportMode.Audio => ext is "uasset" or "umap" ? (true, "") : (false, "unsupported extension for audio mode"),
-                    ExportMode.Spatial => ext is "uasset" or "umap" ? (true, "") : (false, "unsupported extension for spatial mode"),
                     ExportMode.Verse => ext == "uasset" ? (true, "") : (false, "unsupported extension for verse mode"),
                     _ => throw new ArgumentOutOfRangeException(nameof(mode), mode, "Unsupported export mode")
                 };
@@ -107,19 +108,24 @@ public static class ExportProcessor
                     runStatsAccumulator.RecordRequirement(ProcessPackageMode(item, markUsmap, new JsonPackageProcessor(outputDir, verbose, jsonSkipTypeNames)));
                     break;
 
-                case ExportMode.Graphics:
-                    runStatsAccumulator.ModeStats.SetSummaryLabel("Graphic export(s)");
-                    runStatsAccumulator.RecordRequirement(ProcessPackageMode(item, markUsmap, new GraphicsPackageProcessor(outputDir, verbose, runStatsAccumulator.ModeStats)));
+                case ExportMode.Textures:
+                    runStatsAccumulator.ModeStats.SetSummaryLabel("Texture export(s)");
+                    runStatsAccumulator.RecordRequirement(ProcessPackageMode(item, markUsmap, new TexturesPackageProcessor(outputDir, verbose, runStatsAccumulator.ModeStats)));
+                    break;
+
+                case ExportMode.Models:
+                    runStatsAccumulator.ModeStats.SetSummaryLabel("Model export(s)");
+                    runStatsAccumulator.RecordRequirement(ProcessPackageMode(item, markUsmap, new ModelsPackageProcessor(outputDir, verbose, runStatsAccumulator.ModeStats)));
+                    break;
+
+                case ExportMode.Animations:
+                    runStatsAccumulator.ModeStats.SetSummaryLabel("Animation export(s)");
+                    runStatsAccumulator.RecordRequirement(ProcessPackageMode(item, markUsmap, new AnimationsPackageProcessor(outputDir, verbose, runStatsAccumulator.ModeStats)));
                     break;
 
                 case ExportMode.Audio:
                     runStatsAccumulator.ModeStats.SetSummaryLabel("Audio export(s)");
                     runStatsAccumulator.RecordRequirement(ProcessPackageMode(item, markUsmap, new AudioPackageProcessor(item, outputDir, verbose, runStatsAccumulator.ModeStats)));
-                    break;
-
-                case ExportMode.Spatial:
-                    runStatsAccumulator.ModeStats.SetSummaryLabel("Spatial export(s)");
-                    runStatsAccumulator.RecordRequirement(ProcessPackageMode(item, markUsmap, new ConversionPackageProcessor(outputDir, verbose, runStatsAccumulator.ModeStats)));
                     break;
 
                 case ExportMode.Verse:

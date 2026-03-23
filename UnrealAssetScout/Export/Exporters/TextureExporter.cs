@@ -5,7 +5,7 @@ using UnrealAssetScout.Package;
 namespace UnrealAssetScout.Export.Exporters;
 
 // Exports Unreal texture assets to image files on disk.
-// Called by ExportProcessor graphics-mode handlers when a supported `UTexture` needs to be decoded
+// Called by ExportProcessor textures-mode handlers when a supported `UTexture` needs to be decoded
 // and written to the output directory.
 internal static class TextureExporter
 {

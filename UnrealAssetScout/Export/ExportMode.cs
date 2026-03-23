@@ -8,8 +8,9 @@ public enum ExportMode
     Simple,
     Raw,
     Json,
-    Graphics,
+    Textures,
+    Models,
+    Animations,
     Audio,
-    Spatial,
     Verse
 }

@@ -58,4 +58,85 @@ public class SimpleModeOptionTests
                 Directory.Delete(tempDir, recursive: true);
         }
     }
+
+    [Fact]
+    public void ParseArgs_WithTexturesMode_SetsTexturesMode()
+    {
+        var tempDir = Path.Combine(Path.GetTempPath(), "UnrealAssetScout.Tests", Guid.NewGuid().ToString("N"));
+        Directory.CreateDirectory(tempDir);
+
+        try
+        {
+            var options = ConfigOptionsSupport.ParseArgs(
+            [
+                "export",
+                "textures",
+                "--paks", tempDir,
+                "--game", "GAME_UE4_27",
+                "--output", Path.Combine(tempDir, "out")
+            ]);
+
+            Assert.NotNull(options);
+            Assert.Equal(ExportMode.Textures, options.Mode);
+        }
+        finally
+        {
+            if (Directory.Exists(tempDir))
+                Directory.Delete(tempDir, recursive: true);
+        }
+    }
+
+    [Fact]
+    public void ParseArgs_WithModelsMode_SetsModelsMode()
+    {
+        var tempDir = Path.Combine(Path.GetTempPath(), "UnrealAssetScout.Tests", Guid.NewGuid().ToString("N"));
+        Directory.CreateDirectory(tempDir);
+
+        try
+        {
+            var options = ConfigOptionsSupport.ParseArgs(
+            [
+                "export",
+                "models",
+                "--paks", tempDir,
+                "--game", "GAME_UE4_27",
+                "--output", Path.Combine(tempDir, "out")
+            ]);
+
+            Assert.NotNull(options);
+            Assert.Equal(ExportMode.Models, options.Mode);
+        }
+        finally
+        {
+            if (Directory.Exists(tempDir))
+                Directory.Delete(tempDir, recursive: true);
+        }
+    }
+
+    [Fact]
+    public void ParseArgs_WithAnimationsMode_SetsAnimationsMode()
+    {
+        var tempDir = Path.Combine(Path.GetTempPath(), "UnrealAssetScout.Tests", Guid.NewGuid().ToString("N"));
+        Directory.CreateDirectory(tempDir);
+
+        try
+        {
+            var options = ConfigOptionsSupport.ParseArgs(
+            [
+                "export",
+                "animations",
+                "--paks", tempDir,
+                "--game", "GAME_UE4_27",
+                "--output", Path.Combine(tempDir, "out")
+            ]);
+
+            Assert.NotNull(options);
+            Assert.Equal(ExportMode.Animations, options.Mode);
+        }
+        finally
+        {
+            if (Directory.Exists(tempDir))
+                Directory.Delete(tempDir, recursive: true);
+        }
+    }
 }
