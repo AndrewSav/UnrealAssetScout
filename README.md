@@ -98,6 +98,7 @@ These options are defined on the root command and inherited by both `list` and `
 - `-t`, `--skip-types`: `export json:` Replaces the built-in skip list with the specified type names, using normal whitespace-separated command-line values. Unless a higher-precedence skip-type option is also present. See `Default JSON Skip Types` below for the built-in list this replaces.
 - `-w`, `--skip-types-file`: `export json:` Path to a text file containing skip type names. Commas and whitespace are treated as separators, so the file can use one type per line, multiple space-separated types on a line, or comma-separated entries. If both `--skip-types` and `--skip-types-file` are present, the file wins. See `Default JSON Skip Types` below for the built-in list this overrides.
 - `-k`, `--no-skip-types`: `export json:` Disable the built-in skip list entirely. See `Default JSON Skip Types` below for the built-in list this disables. This has the highest precedence and overrides both `--skip-types-file` and `--skip-types`.
+- `-d`, `--script-bytecode`: `export json:` Serialize Unreal script bytecode into JSON output when available. This is ignored for other export modes.
 
 Mode values are parsed case-insensitively, so `export json` and `export Json` both work.
 

@@ -81,6 +81,8 @@ public static class Program
                 new VersionContainer(options.Game!.Value),
                 StringComparer.OrdinalIgnoreCase);
 
+            provider.ReadScriptData = options.Mode == ExportMode.Json && options.ScriptBytecode;
+
             if (options.UsmapPath is not null)
                 provider.MappingsContainer = new FileUsmapTypeMappingsProvider(options.UsmapPath);
 

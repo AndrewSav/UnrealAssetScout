@@ -56,6 +56,7 @@ internal static class ConfigOptionsSupport
             exportOptions.JsonSkipTypes,
             exportOptions.JsonSkipTypesFile,
             exportOptions.NoSkipTypes,
+            exportOptions.ScriptBytecode,
             exportOptions.Output,
             exportOptions.Verbose,
             exportOptions.CompactProgress
@@ -101,6 +102,7 @@ internal static class ConfigOptionsSupport
             Verbose = isExportCommand && parseResult.GetValue(exportOptions.Verbose),
             MarkUsmap = parseResult.GetValue(rootOptions.MarkUsmap),
             CompactProgress = isExportCommand && parseResult.GetValue(exportOptions.CompactProgress),
+            ScriptBytecode = isExportCommand && parseResult.GetValue(exportOptions.ScriptBytecode),
             LogCounter = parseResult.GetValue(rootOptions.LogCounter),
             Log = parseResult.GetValue(rootOptions.Log) ?? defaultLogFileName,
             LogSpecified = parseResult.GetResult(rootOptions.Log) is not null,
@@ -233,6 +235,7 @@ internal static class ConfigOptionsSupport
         var skipTypesFile = ConfigOptionFactory.CreateExistingFileOption("--skip-types-file", "-w", "export json: Path to a text file containing skip type names");
         skipTypesFile.HelpName = "filename";
         var noSkipTypes = ConfigOptionFactory.CreateBoolOption("--no-skip-types", "-k", "export json: Disable the built-in skip list entirely");
+        var scriptBytecode = ConfigOptionFactory.CreateBoolOption("--script-bytecode", "-d", "export json: Serialize script bytecode into JSON output. Ignored for other export modes.");
 
         return new(
             new Argument<ExportMode>("mode")
@@ -242,6 +245,7 @@ internal static class ConfigOptionsSupport
             skipTypes,
             skipTypesFile,
             noSkipTypes,
+            scriptBytecode,
             output,
             ConfigOptionFactory.CreateBoolOption("--verbose", "-v", "export: Print skipped files in the log"),
             ConfigOptionFactory.CreateBoolOption("--compact", "-x", "export: Show compact progress and write full logs to a file"));
@@ -280,6 +284,7 @@ internal static class ConfigOptionsSupport
         Option<string[]> JsonSkipTypes,
         Option<FileInfo> JsonSkipTypesFile,
         Option<bool> NoSkipTypes,
+        Option<bool> ScriptBytecode,
         Option<string> Output,
         Option<bool> Verbose,
         Option<bool> CompactProgress);

@@ -873,6 +873,67 @@ public class ConfigOptionsTests
     }
 
     [Fact]
+    public void ParseArgs_ScriptBytecode_WithJsonMode_SetsFlag()
+    {
+        var tempDir = Path.Combine(Path.GetTempPath(), "UnrealAssetScout.Tests", Guid.NewGuid().ToString("N"));
+        var outputDir = Path.Combine(tempDir, "out");
+
+        Directory.CreateDirectory(tempDir);
+
+        try
+        {
+            var options = ConfigOptionsSupport.ParseArgs(
+            [
+                "export",
+                "json",
+                "--paks", tempDir,
+                "--game", "GAME_UE5_3",
+                "--script-bytecode",
+                "--output", outputDir
+            ]);
+
+            Assert.NotNull(options);
+            Assert.True(options.ScriptBytecode);
+        }
+        finally
+        {
+            if (Directory.Exists(tempDir))
+                Directory.Delete(tempDir, recursive: true);
+        }
+    }
+
+    [Fact]
+    public void ParseArgs_ScriptBytecode_WithNonJsonMode_IsAccepted()
+    {
+        var tempDir = Path.Combine(Path.GetTempPath(), "UnrealAssetScout.Tests", Guid.NewGuid().ToString("N"));
+        var outputDir = Path.Combine(tempDir, "out");
+
+        Directory.CreateDirectory(tempDir);
+
+        try
+        {
+            var options = ConfigOptionsSupport.ParseArgs(
+            [
+                "export",
+                "textures",
+                "--paks", tempDir,
+                "--game", "GAME_UE5_3",
+                "--script-bytecode",
+                "--output", outputDir
+            ]);
+
+            Assert.NotNull(options);
+            Assert.Equal(ExportMode.Textures, options.Mode);
+            Assert.True(options.ScriptBytecode);
+        }
+        finally
+        {
+            if (Directory.Exists(tempDir))
+                Directory.Delete(tempDir, recursive: true);
+        }
+    }
+
+    [Fact]
     public void ParseArgs_Help_PrintsStockHelpAndDocumentationLink()
     {
         var originalError = Console.Error;

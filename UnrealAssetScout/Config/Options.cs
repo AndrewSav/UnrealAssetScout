@@ -32,5 +32,6 @@ internal class Options
     public bool LogAppend { get; set; }
     public bool NoLog { get; set; }
     public bool LogLibraries { get; set; }
+    public bool ScriptBytecode { get; set; }
     public List<string> JsonSkipTypeNames { get; set; } = [];
 }
