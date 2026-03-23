@@ -14,6 +14,10 @@ Reason:
 
 - Start all commit messages with a lowercase letter.
 
+## Pull request descriptions
+
+- When authoring a PR for this repository, include a note in the PR description that it was authored by Codex.
+
 ## Line endings
 
 - Do not introduce mixed line endings when editing files.
