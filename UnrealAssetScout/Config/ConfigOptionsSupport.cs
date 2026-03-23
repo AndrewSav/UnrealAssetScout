@@ -63,13 +63,13 @@ internal static class ConfigOptionsSupport
         };
         root.Subcommands.Add(listCommand);
         root.Subcommands.Add(exportCommand);
-        var versionOption = root.Options.OfType<VersionOption>().Single();
-        root.Options.Remove(versionOption);
         ConfigureHelpOption(root);
         var helpAction = root.Options.OfType<HelpOption>().Single().Action;
+        var versionAction = root.Options.OfType<VersionOption>().Single().Action;
 
         var parseResult = root.Parse(args, new ParserConfiguration());
-        if (ReferenceEquals(parseResult.Action, helpAction))
+        if (ReferenceEquals(parseResult.Action, helpAction) ||
+            ReferenceEquals(parseResult.Action, versionAction))
         {
             parseResult.Invoke(new InvocationConfiguration
             {

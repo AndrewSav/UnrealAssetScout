@@ -2,10 +2,9 @@ using System.CommandLine;
 using System.CommandLine.Invocation;
 namespace UnrealAssetScout.Config;
 
-// A small wrapper around System.CommandLine's stock help action that appends build version
-// information and a documentation link. Created by ConfigOptionsSupport when configuring the
-// root help option, then invoked by System.CommandLine whenever standard help output is
-// displayed for UnrealAssetScout.
+// A small wrapper around System.CommandLine's stock help action that appends a documentation
+// link. Created by ConfigOptionsSupport when configuring the root help option, then invoked by
+// System.CommandLine whenever standard help output is displayed for UnrealAssetScout.
 internal sealed class DocumentationLinkHelpAction : SynchronousCommandLineAction
 {
     private readonly SynchronousCommandLineAction _innerAction;
@@ -21,17 +20,10 @@ internal sealed class DocumentationLinkHelpAction : SynchronousCommandLineAction
     {
         var result = _innerAction.Invoke(parseResult);
         var output = parseResult.InvocationConfiguration.Output;
-        output.WriteLine("Version:");
-        output.WriteLine($"  {GetBuildVersion()}");
         output.WriteLine("Documentation:");
         output.WriteLine($"  {_documentationUrl}");
         return result;
     }
 
     public override bool ClearsParseErrors => _innerAction.ClearsParseErrors;
-
-    private static string GetBuildVersion()
-    {
-        return typeof(DocumentationLinkHelpAction).Assembly.GetName().Version?.ToString() ?? "0.0.0.0";
-    }
 }
