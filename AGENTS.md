@@ -18,6 +18,14 @@ Reason:
 
 - When authoring a PR for this repository, include a note in the PR description that it was authored by Codex.
 
+## Release preparation
+
+- When preparing a release, first verify that the current branch is the tip of `main` and that the workspace is clean. If either check fails, stop and warn instead of making changes.
+- When preparing a release, if the release version is not explicitly provided, ask for it instead of assuming.
+- When preparing a release, run a local `dotnet build UnrealAssetScout.slnx` before making changelog changes to confirm the repo is in a buildable state.
+- When preparing a release, leave the default local `Version` and `AssemblyVersion` at `0.0.0.0`; do not bump them for releases.
+- When preparing a release, after moving entries out of `Unreleased`, leave a single bullet under `## Unreleased` that says `None`.
+
 ## Line endings
 
 - Do not introduce mixed line endings when editing files.
