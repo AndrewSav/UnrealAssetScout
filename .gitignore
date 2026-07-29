@@ -352,8 +352,3 @@ MigrationBackup/
 
 settings.local.json
 **/Properties/launchSettings.json
-
-FModel/
-SteamShortcuts/
-command-line-api/
-superpower/

@@ -1,14 +1,6 @@
-## UnrealAssetScout execution preference
+# CLAUDE.md
 
-This file provides guidance to Codex (openai.com/codex) when working with code in this repository.
-
-Command format rule:
-- Do not prepend `$env:DOTNET_CLI_HOME=(Resolve-Path .).Path` (or any environment-variable prefix) to `dotnet build` or `dotnet test`.
-- Run plain `dotnet build ...` and `dotnet test ...` commands with escalation instead.
-
-Reason:
-- In sandbox mode, dotnet may fail first-run/tool-path sentinel writes under C:\Users\CodexSandboxOffline\.dotnet with UnauthorizedAccessException.
-- Escalated runs avoid this path restriction.
+This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
 ## Commit message style
 
@@ -16,7 +8,7 @@ Reason:
 
 ## Pull request descriptions
 
-- When authoring a PR for this repository, include a note in the PR description that it was authored by Codex.
+- When authoring a PR for this repository, include a note in the PR description that it was authored by Claude.
 
 ## Release preparation
 
@@ -62,9 +54,12 @@ Every time your change code, make sure that class comments remain up to date.
 
 ## More local knowledge
 
-The repo has some top level folders ignored, they are not a part of the repo, however if needed, check if there is a local copy:
+Several external sources are useful when working on this project. They are not part of this repo and
+are not vendored into it; check for them as siblings of this repo on the local file system
+(alongside it, not inside it) before assuming they are unavailable.
+
+These are git repositories. If one is needed and absent, ask for it to be cloned:
 
 - FModel is an asset extraction GUI and has a lot of code paths and code that is relevant to this project and can be reused, or used to gain insight on some of this project parts
-- SteamShortcuts contains links to the locally available games, some of which may be UE games and could be used for testing some aspects of extraction
 - command-line-api - System.CommandLine source code
 - superpower - Datalust Superpower source code
