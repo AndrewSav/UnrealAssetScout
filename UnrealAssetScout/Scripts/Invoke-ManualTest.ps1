@@ -72,11 +72,12 @@ function Invoke-TimedStep {
     }
 }
 
+
 Invoke-TimedStep "list tree" @("list", $responseFile, "--format", "tree")
 Invoke-TimedStep "list default" @("list", $responseFile, "--log-append")
 Invoke-TimedStep "list types csv" @("list", $responseFile, "--format", "types", "--file", "$Name.csv", "--log-append")
 Invoke-TimedStep "export simple" @("export", "simple", $responseFile, "--output", (Join-Path $dumpRoot "simple"), "--compact", "--log-append")
-Invoke-TimedStep "export json" @("export", "json", $responseFile, "--output", (Join-Path $dumpRoot "json"), "--compact", "--log-append")
+Invoke-TimedStep "export json" @("export", "json", $responseFile, "--output", (Join-Path $dumpRoot "json"), "--compact", "--log-append", "--script-bytecode")
 Invoke-TimedStep "export textures" @("export", "textures", $responseFile, "--output", (Join-Path $dumpRoot "textures"), "--compact", "--log-append")
 
 $runFinishedAt = Get-Date
