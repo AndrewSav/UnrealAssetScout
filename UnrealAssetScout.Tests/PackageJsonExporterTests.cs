@@ -1,4 +1,4 @@
-using CUE4Parse.UE4.Assets.Exports;
+﻿using CUE4Parse.UE4.Assets.Exports;
 using UnrealAssetScout.Export.Exporters;
 using UnrealAssetScout.Export.Processors;
 

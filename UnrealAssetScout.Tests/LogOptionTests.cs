@@ -1,4 +1,4 @@
-namespace UnrealAssetScout.Tests;
+﻿namespace UnrealAssetScout.Tests;
 
 public class LogOptionTests
 {

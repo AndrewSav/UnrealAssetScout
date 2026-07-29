@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using UnrealAssetScout.Package;
 
 namespace UnrealAssetScout.Statistics;

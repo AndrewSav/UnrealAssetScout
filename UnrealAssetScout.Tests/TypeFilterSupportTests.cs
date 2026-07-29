@@ -1,4 +1,4 @@
-using UnrealAssetScout.TypeFiltering;
+﻿using UnrealAssetScout.TypeFiltering;
 using CsvHelper;
 
 namespace UnrealAssetScout.Tests;

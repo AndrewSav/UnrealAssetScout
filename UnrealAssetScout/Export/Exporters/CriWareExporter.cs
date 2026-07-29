@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Linq;
 using CUE4Parse.UE4.CriWare;
 using CUE4Parse.UE4.CriWare.Readers;

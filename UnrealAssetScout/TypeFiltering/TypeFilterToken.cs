@@ -1,4 +1,4 @@
-using Superpower.Display;
+﻿using Superpower.Display;
 
 namespace UnrealAssetScout.TypeFiltering;
 

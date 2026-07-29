@@ -1,4 +1,4 @@
-namespace UnrealAssetScout.Package;
+﻿namespace UnrealAssetScout.Package;
 
 internal enum PackageLoadResult
 {

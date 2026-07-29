@@ -2,7 +2,9 @@
 
 ## Unreleased
 
-- None
+- Made `list --format types` much faster.
+- Upgrade the project to .NET 10.
+- Updated the bundled CUE4Parse.
 
 ## v0.1.0
 

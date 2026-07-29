@@ -1,1 +1,1 @@
-& (Join-Path $PSScriptRoot "Invoke-ManualTest.ps1") -Name "desynced-server"
+﻿& (Join-Path $PSScriptRoot "Invoke-ManualTest.ps1") -Name "desynced-server"

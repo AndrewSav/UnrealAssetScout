@@ -1,4 +1,4 @@
-using CUE4Parse.FileProvider.Objects;
+﻿using CUE4Parse.FileProvider.Objects;
 using CUE4Parse.FileProvider.Vfs;
 
 namespace UnrealAssetScout.Export;

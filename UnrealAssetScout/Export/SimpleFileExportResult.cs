@@ -1,4 +1,4 @@
-namespace UnrealAssetScout.Export;
+﻿namespace UnrealAssetScout.Export;
 
 // Carries both the specialized simple-export attempt and the raw-file fallback result.
 // Returned by SimpleFileExporter to ExportProcessor so simple-mode logging and stats can stay in

@@ -1,4 +1,4 @@
-using UnrealAssetScout.Export;
+﻿using UnrealAssetScout.Export;
 using UnrealAssetScout.Export.Exporters;
 
 namespace UnrealAssetScout.Tests;

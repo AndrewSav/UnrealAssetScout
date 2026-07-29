@@ -1,4 +1,4 @@
-namespace UnrealAssetScout.Config;
+﻿namespace UnrealAssetScout.Config;
 
 // The available output formats for the `list` command.
 // Parsed by ConfigOptionsSupport for list-mode runs, then consumed by ListProcessor to choose

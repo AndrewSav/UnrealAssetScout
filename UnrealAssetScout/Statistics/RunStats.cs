@@ -1,4 +1,4 @@
-namespace UnrealAssetScout.Statistics;
+﻿namespace UnrealAssetScout.Statistics;
 
 // Immutable record holding the final per-file timing statistics and optional mode-specific
 // processing statistics for a run. Returned by ExportProcessor.ProcessFiles and printed by

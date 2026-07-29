@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.IO;
 using CUE4Parse.GameTypes.KRD.Assets.Exports;
 using UnrealAssetScout.Package;

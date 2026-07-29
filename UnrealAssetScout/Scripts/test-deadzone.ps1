@@ -1,1 +1,1 @@
-& (Join-Path $PSScriptRoot "Invoke-ManualTest.ps1") -Name "deadzone"
+﻿& (Join-Path $PSScriptRoot "Invoke-ManualTest.ps1") -Name "deadzone"

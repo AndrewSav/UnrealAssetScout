@@ -1,4 +1,4 @@
-using System.Diagnostics;
+﻿using System.Diagnostics;
 using CUE4Parse.UE4.Assets.Exports;
 using UnrealAssetScout.Logging;
 using UnrealAssetScout.Package;

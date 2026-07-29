@@ -1,4 +1,4 @@
-using CUE4Parse.UE4.Oodle.Objects;
+﻿using CUE4Parse.UE4.Oodle.Objects;
 
 namespace UnrealAssetScout.Export.Exporters;
 

@@ -1,4 +1,4 @@
-using UnrealAssetScout.Statistics;
+﻿using UnrealAssetScout.Statistics;
 using UnrealAssetScout.Utils;
 using Serilog;
 

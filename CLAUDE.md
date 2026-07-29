@@ -23,6 +23,12 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - Do not introduce mixed line endings when editing files.
 - Preserve the file's existing line-ending style, and normalize the whole file if an edit would otherwise leave it mixed.
 
+## File encoding
+
+- Save source and project files as UTF-8 with a BOM: `.cs`, `.csproj`, `.slnx`, `.sln`, `.ps1`, `.DotSettings`. These can legitimately contain non-ASCII characters, and the BOM stops tooling from having to guess the encoding.
+- Save documentation, plain-text, and config files without a BOM: `.md`, `.txt`, `.yml`, `.json`, `.gitignore`.
+- Keep those non-BOM files ASCII-only. Do not use em dashes, en dashes, curly quotes, ellipsis characters, or any other non-ASCII punctuation; use plain ASCII equivalents instead.
+
 ## CUE4Parse boundaries
 
 - `CUE4Parse` is an external library and does not belong to this project.
