@@ -23,8 +23,9 @@ internal static class AudioBankExporter
             {
                 var sounds = provider switch
                 {
-                    WwiseProvider wwise => wwise.ExtractBankSounds(new WwiseReader(archive))
-                        .Select(s => (SimpleExportSupport.NormalizeRelativePath(s.OutputPath), s.Extension, s.Data)),
+                    WwiseProvider wwise => wwise
+                        .ExtractBankSounds(new WwiseReader(new FWwiseArchive(archive), new WwiseGameFileSource(item.File)))
+                        .Select(s => (SimpleExportSupport.NormalizeRelativePath(s.OutputPath), s.Extension, Data: s.GetData())),
                     FModProvider fmod when fmod.TryLoadBank(archive, item.File.NameWithoutExtension, out var fmodReader) =>
                         fmod.ExtractBankSounds(fmodReader)
                             .Select(s => (SimpleExportSupport.CombineRelativePath(

@@ -6,7 +6,7 @@ param(
 $ErrorActionPreference = "Stop"
 $PSNativeCommandUseErrorActionPreference = $true
 
-$exePath = Join-Path $PSScriptRoot "..\bin\Debug\net8.0\uas.exe"
+$exePath = Join-Path $PSScriptRoot "..\bin\Debug\net10.0\uas.exe"
 $responseFilePath = Join-Path $PSScriptRoot "$Name.config"
 $responseFile = "@$Name.config"
 $dumpRoot = Join-Path "C:\_pakdumps" $Name

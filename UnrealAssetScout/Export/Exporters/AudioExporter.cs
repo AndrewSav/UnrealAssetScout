@@ -30,7 +30,7 @@ internal static class AudioExporter
 
             return export switch
             {
-                UExternalSource { Data.WemFile: { Length: > 0 } wemFile } externalSource =>
+                UExternalSource { Data.WemFile: { IsValid: true } wemFile } externalSource =>
                     TrySaveAudioFile(
                         packagePath,
                         outputDir,
@@ -38,7 +38,7 @@ internal static class AudioExporter
                             ? export.Name
                             : Path.GetFileNameWithoutExtension(externalSource.ExternalSourcePath),
                         "wem",
-                        wemFile,
+                        wemFile.GetData(),
                         export.Name),
                 UAkAudioBank audioBank => TryExportWwiseBank(audioBank, item, packagePath, outputDir),
                 UAkAudioEvent audioEvent => TryExportWwiseEvent(audioEvent, item, packagePath, outputDir),
@@ -73,7 +73,7 @@ internal static class AudioExporter
             packagePath,
             outputDir,
             audioBank.Name,
-            wwiseProvider.ExtractBankSounds(audioBank).Select(sound => (sound.OutputPath, sound.Extension, sound.Data)));
+            wwiseProvider.ExtractBankSounds(audioBank).Select(sound => (sound.OutputPath, sound.Extension, Data: sound.GetData())));
     }
 
     private static ExportAttemptResult TryExportWwiseEvent(UAkAudioEvent audioEvent, ExportItemInfo item, string packagePath, string outputDir)
@@ -86,7 +86,7 @@ internal static class AudioExporter
             packagePath,
             outputDir,
             audioEvent.Name,
-            wwiseProvider.ExtractAudioEventSounds(audioEvent).Select(sound => (sound.OutputPath, sound.Extension, sound.Data)));
+            wwiseProvider.ExtractAudioEventSounds(audioEvent).Select(sound => (sound.OutputPath, sound.Extension, Data: sound.GetData())));
     }
 
     private static ExportAttemptResult TryExportFmodEvent(UFMODEvent fmodEvent, ExportItemInfo item, string packagePath, string outputDir)
