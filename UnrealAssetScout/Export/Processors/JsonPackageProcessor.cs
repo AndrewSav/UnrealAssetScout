@@ -18,22 +18,24 @@ internal sealed class JsonPackageProcessor(string outputDir, bool verbose, IRead
     public override void ProcessPackage(PackageExportContext packageContext)
     {
         var exports = packageContext.Package!.GetExports().ToList();
-        var retainedExports = FilterJsonExports(exports, _jsonSkippedTypeNameSet);
 
-        // Skip only when the package is ENTIRELY specialized assets, i.e. nothing is left worth writing.
-        // A package that merely CONTAINS one is still written, without it.
-        if (exports.Count > 0 && retainedExports.Count == 0)
+        // All or nothing. A package is skipped only when every export is specialized; otherwise it is
+        // written in full, INCLUDING its specialized exports.
+        //
+        // Writing it in full is what keeps the file internally consistent. CUE4Parse emits object references
+        // as "{package}.{ExportIndex}" but never emits ExportIndex on the objects themselves, so the only way
+        // a consumer can resolve a reference is by array position -- which holds only while the array is
+        // every export in order. Omitting any export silently shifts everything after it, and a reference
+        // then resolves to a plausible WRONG object rather than failing. Dropping 1 269 exports from
+        // Palworld's PL_MainWorld5.umap made all 152 fast-travel points resolve to each other's components.
+        if (ShouldSkipJsonExport(exports, _jsonSkippedTypeNameSet))
         {
             if (Verbose)
                 AppLog.Information("[SKIPPED]  {Prefix}{Path} (specialized export asset)", packageContext.Prefix, packageContext.Path);
             return;
         }
 
-        if (Verbose && retainedExports.Count < exports.Count)
-            AppLog.Information("[FILTERED] {Prefix}{Path} ({Dropped} of {Total} exports specialized)",
-                packageContext.Prefix, packageContext.Path, exports.Count - retainedExports.Count, exports.Count);
-
-        var exportResult = PackageJsonExporter.TryExport(packageContext.Path, OutputDir, retainedExports);
+        var exportResult = PackageJsonExporter.TryExport(packageContext.Path, OutputDir, exports);
         if (exportResult.Failed)
         {
             LogFailure(packageContext, exportResult);
@@ -42,16 +44,6 @@ internal sealed class JsonPackageProcessor(string outputDir, bool verbose, IRead
 
         foreach (var exportedArtifact in exportResult.ExportedArtifacts)
             LogExport(packageContext, exportedArtifact);
-    }
-
-    // Drops exports that have a specialized exporter of their own (textures -> PNG, meshes -> model files)
-    // so they are not also re-emitted as JSON.
-    internal static List<UObject> FilterJsonExports(IEnumerable<UObject> exports, IReadOnlySet<string> skippedTypeNames)
-    {
-        if (skippedTypeNames.Count == 0)
-            return exports.ToList();
-
-        return exports.Where(export => !IsSpecialized(export, skippedTypeNames)).ToList();
     }
 
     // True only when every export is specialized. An empty skip list or an empty package is never skipped,

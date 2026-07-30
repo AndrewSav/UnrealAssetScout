@@ -82,50 +82,14 @@ public sealed class PackageJsonExporterTests
     }
 
     [Fact]
-    public void FilterJsonExports_DropsOnlyTheSkippedExports()
-    {
-        var retained = new RetainedType();
-
-        var result = JsonPackageProcessor.FilterJsonExports(
-            [new DerivedSkippedType(), retained, new DerivedSkippedType()],
-            new HashSet<string>(StringComparer.OrdinalIgnoreCase) { nameof(DerivedSkippedType) });
-
-        Assert.Single(result);
-        Assert.Same(retained, result[0]);
-    }
-
-    [Fact]
-    public void FilterJsonExports_KeepsEverythingWhenTheSkipListIsEmpty()
-    {
-        var result = JsonPackageProcessor.FilterJsonExports(
-            [new DerivedSkippedType(), new RetainedType()],
-            new HashSet<string>(StringComparer.OrdinalIgnoreCase));
-
-        Assert.Equal(2, result.Count);
-    }
-
-    [Fact]
-    public void FilterJsonExports_DropsExportsMatchedByABaseTypeName()
-    {
-        var retained = new RetainedType();
-
-        var result = JsonPackageProcessor.FilterJsonExports(
-            [new DerivedSkippedType(), retained],
-            new HashSet<string>(StringComparer.OrdinalIgnoreCase) { nameof(BaseSkippedType) });
-
-        Assert.Single(result);
-        Assert.Same(retained, result[0]);
-    }
-
-    [Fact]
-    public void FilterJsonExports_MatchesThroughAWholeInheritanceChain()
+    public void ShouldSkipJsonExport_MatchesThroughAWholeInheritanceChain()
     {
         // UTexture -> UTexture2D is one hop; deeper chains must work the same way.
-        var result = JsonPackageProcessor.FilterJsonExports(
+        var shouldSkip = JsonPackageProcessor.ShouldSkipJsonExport(
             [new GrandchildSkippedType()],
             new HashSet<string>(StringComparer.OrdinalIgnoreCase) { nameof(BaseSkippedType) });
 
-        Assert.Empty(result);
+        Assert.True(shouldSkip);
     }
 
     private class BaseSkippedType : UObject;
