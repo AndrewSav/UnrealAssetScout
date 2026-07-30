@@ -2,12 +2,17 @@
 
 ## Unreleased
 
+- None
+
+## v0.2.0
+
 - Fixed `export json` skip-list entries that name a base class never matching anything.
 - Fixed `export json` discarding an entire package when only some of its exports matched the skip list.
 - `--verbose` now also reports `[FILTERED]` for packages that are written with some exports dropped.
 - Made `list --format types` much faster.
 - Upgrade the project to .NET 10.
 - Updated the bundled CUE4Parse.
+- Published binaries are now built in release configuration instead of debug.
 
 ## v0.1.0
 
