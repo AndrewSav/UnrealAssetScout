@@ -2,7 +2,11 @@
 
 ## Unreleased
 
-- A package is skipped only when every one of its exports is specialized, and is otherwise written in full
+- None
+
+## v0.2.1
+
+- A package is skipped only when every one of its exports is specialized, and is otherwise written in full.
 - Removed the `[FILTERED]` `--verbose` line, which no longer has anything to report.
 
 ## v0.2.0

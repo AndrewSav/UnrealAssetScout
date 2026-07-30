@@ -19,15 +19,7 @@ internal sealed class JsonPackageProcessor(string outputDir, bool verbose, IRead
     {
         var exports = packageContext.Package!.GetExports().ToList();
 
-        // All or nothing. A package is skipped only when every export is specialized; otherwise it is
-        // written in full, INCLUDING its specialized exports.
-        //
-        // Writing it in full is what keeps the file internally consistent. CUE4Parse emits object references
-        // as "{package}.{ExportIndex}" but never emits ExportIndex on the objects themselves, so the only way
-        // a consumer can resolve a reference is by array position -- which holds only while the array is
-        // every export in order. Omitting any export silently shifts everything after it, and a reference
-        // then resolves to a plausible WRONG object rather than failing. Dropping 1 269 exports from
-        // Palworld's PL_MainWorld5.umap made all 152 fast-travel points resolve to each other's components.
+        // A package is skipped only when every export is specialized
         if (ShouldSkipJsonExport(exports, _jsonSkippedTypeNameSet))
         {
             if (Verbose)
