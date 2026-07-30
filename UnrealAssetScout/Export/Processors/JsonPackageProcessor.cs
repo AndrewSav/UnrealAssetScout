@@ -51,7 +51,7 @@ internal sealed class JsonPackageProcessor(string outputDir, bool verbose, IRead
         if (skippedTypeNames.Count == 0)
             return exports.ToList();
 
-        return exports.Where(export => !skippedTypeNames.Contains(export.GetType().Name)).ToList();
+        return exports.Where(export => !IsSpecialized(export, skippedTypeNames)).ToList();
     }
 
     // True only when every export is specialized. An empty skip list or an empty package is never skipped,
@@ -65,6 +65,19 @@ internal sealed class JsonPackageProcessor(string outputDir, bool verbose, IRead
         if (exportList.Count == 0)
             return false;
 
-        return exportList.All(export => skippedTypeNames.Contains(export.GetType().Name));
+        return exportList.All(export => IsSpecialized(export, skippedTypeNames));
+    }
+
+    // Matches the export's own type name OR any of its base type names, so a skip-list entry can name a
+    // whole category as well as a concrete type. This means that listing UObject would skip all exports.
+    private static bool IsSpecialized(UObject export, IReadOnlySet<string> skippedTypeNames)
+    {
+        for (var type = export.GetType(); type is not null && type != typeof(object); type = type.BaseType)
+        {
+            if (skippedTypeNames.Contains(type.Name))
+                return true;
+        }
+
+        return false;
     }
 }

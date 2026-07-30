@@ -17,11 +17,24 @@ public sealed class PackageJsonExporterTests
     }
 
     [Fact]
-    public void ShouldSkipJsonExport_DoesNotMatchBaseTypeName()
+    public void ShouldSkipJsonExport_MatchesBaseTypeName()
     {
+        // The built-in list names categories as well as concrete types: UTexture, UAnimSequenceBase and
+        // ALandscapeProxy are abstract bases that nothing is ever an instance of. Matching only the concrete
+        // name left those entries doing nothing at all.
         var shouldSkip = JsonPackageProcessor.ShouldSkipJsonExport(
             [new DerivedSkippedType()],
             new HashSet<string>(StringComparer.OrdinalIgnoreCase) { nameof(BaseSkippedType) });
+
+        Assert.True(shouldSkip);
+    }
+
+    [Fact]
+    public void ShouldSkipJsonExport_DoesNotMatchAnUnrelatedTypeName()
+    {
+        var shouldSkip = JsonPackageProcessor.ShouldSkipJsonExport(
+            [new DerivedSkippedType()],
+            new HashSet<string>(StringComparer.OrdinalIgnoreCase) { nameof(RetainedType) });
 
         Assert.False(shouldSkip);
     }
@@ -92,18 +105,34 @@ public sealed class PackageJsonExporterTests
     }
 
     [Fact]
-    public void FilterJsonExports_DoesNotMatchBaseTypeName()
+    public void FilterJsonExports_DropsExportsMatchedByABaseTypeName()
     {
+        var retained = new RetainedType();
+
         var result = JsonPackageProcessor.FilterJsonExports(
-            [new DerivedSkippedType()],
+            [new DerivedSkippedType(), retained],
             new HashSet<string>(StringComparer.OrdinalIgnoreCase) { nameof(BaseSkippedType) });
 
         Assert.Single(result);
+        Assert.Same(retained, result[0]);
+    }
+
+    [Fact]
+    public void FilterJsonExports_MatchesThroughAWholeInheritanceChain()
+    {
+        // UTexture -> UTexture2D is one hop; deeper chains must work the same way.
+        var result = JsonPackageProcessor.FilterJsonExports(
+            [new GrandchildSkippedType()],
+            new HashSet<string>(StringComparer.OrdinalIgnoreCase) { nameof(BaseSkippedType) });
+
+        Assert.Empty(result);
     }
 
     private class BaseSkippedType : UObject;
 
-    private sealed class DerivedSkippedType : BaseSkippedType;
+    private class DerivedSkippedType : BaseSkippedType;
+
+    private sealed class GrandchildSkippedType : DerivedSkippedType;
 
     private sealed class RetainedType : UObject;
 }

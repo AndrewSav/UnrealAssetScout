@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- Fixed `export json` skip-list entries that name a base class never matching anything.
 - Fixed `export json` discarding an entire package when only some of its exports matched the skip list.
 - `--verbose` now also reports `[FILTERED]` for packages that are written with some exports dropped.
 - Made `list --format types` much faster.
