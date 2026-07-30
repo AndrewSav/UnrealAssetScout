@@ -18,14 +18,22 @@ internal sealed class JsonPackageProcessor(string outputDir, bool verbose, IRead
     public override void ProcessPackage(PackageExportContext packageContext)
     {
         var exports = packageContext.Package!.GetExports().ToList();
-        if (ShouldSkipJsonExport(exports, _jsonSkippedTypeNameSet))
+        var retainedExports = FilterJsonExports(exports, _jsonSkippedTypeNameSet);
+
+        // Skip only when the package is ENTIRELY specialized assets, i.e. nothing is left worth writing.
+        // A package that merely CONTAINS one is still written, without it.
+        if (exports.Count > 0 && retainedExports.Count == 0)
         {
             if (Verbose)
                 AppLog.Information("[SKIPPED]  {Prefix}{Path} (specialized export asset)", packageContext.Prefix, packageContext.Path);
             return;
         }
 
-        var exportResult = PackageJsonExporter.TryExport(packageContext.Path, OutputDir, exports);
+        if (Verbose && retainedExports.Count < exports.Count)
+            AppLog.Information("[FILTERED] {Prefix}{Path} ({Dropped} of {Total} exports specialized)",
+                packageContext.Prefix, packageContext.Path, exports.Count - retainedExports.Count, exports.Count);
+
+        var exportResult = PackageJsonExporter.TryExport(packageContext.Path, OutputDir, retainedExports);
         if (exportResult.Failed)
         {
             LogFailure(packageContext, exportResult);
@@ -36,11 +44,27 @@ internal sealed class JsonPackageProcessor(string outputDir, bool verbose, IRead
             LogExport(packageContext, exportedArtifact);
     }
 
+    // Drops exports that have a specialized exporter of their own (textures -> PNG, meshes -> model files)
+    // so they are not also re-emitted as JSON.
+    internal static List<UObject> FilterJsonExports(IEnumerable<UObject> exports, IReadOnlySet<string> skippedTypeNames)
+    {
+        if (skippedTypeNames.Count == 0)
+            return exports.ToList();
+
+        return exports.Where(export => !skippedTypeNames.Contains(export.GetType().Name)).ToList();
+    }
+
+    // True only when every export is specialized. An empty skip list or an empty package is never skipped,
+    // preserving the previous behaviour for those cases.
     internal static bool ShouldSkipJsonExport(IEnumerable<UObject> exports, IReadOnlySet<string> skippedTypeNames)
     {
         if (skippedTypeNames.Count == 0)
             return false;
 
-        return exports.Any(export => skippedTypeNames.Contains(export.GetType().Name));
+        var exportList = exports as IReadOnlyCollection<UObject> ?? exports.ToList();
+        if (exportList.Count == 0)
+            return false;
+
+        return exportList.All(export => skippedTypeNames.Contains(export.GetType().Name));
     }
 }

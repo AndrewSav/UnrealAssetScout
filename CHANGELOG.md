@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Fixed `export json` discarding an entire package when only some of its exports matched the skip list.
+- `--verbose` now also reports `[FILTERED]` for packages that are written with some exports dropped.
 - Made `list --format types` much faster.
 - Upgrade the project to .NET 10.
 - Updated the bundled CUE4Parse.
