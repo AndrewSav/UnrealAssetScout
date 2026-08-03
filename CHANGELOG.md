@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+- None
+
+## v0.3.0
+
 - Incremental export. When a manifest is present in the output directory, an export run only
   redoes work whose inputs changed, and deletes outputs no longer produced. `--rebuild` forces a
   full run, `--dry-run` reports without writing, and `--accept-tool-version` proceeds past a uas

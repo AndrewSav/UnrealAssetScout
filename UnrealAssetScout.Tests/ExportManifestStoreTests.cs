@@ -85,7 +85,7 @@ public sealed class ExportManifestStoreTests
         ExportManifestStore.Save(dir.Path, manifest);
 
         var entryLine = Assert.Single(
-            File.ReadAllLines(ExportManifestStore.PathFor(dir.Path)).Where(line => line.Contains("\"c\"")));
+            File.ReadAllLines(ExportManifestStore.PathFor(dir.Path)), line => line.Contains("\"c\""));
 
         Assert.Contains("\"ms\":1.5", entryLine);
         Assert.EndsWith("}", entryLine.TrimEnd(','));
