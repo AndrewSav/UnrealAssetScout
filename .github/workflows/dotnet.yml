@@ -16,11 +16,11 @@ jobs:
 
     steps:
     - name: Checkout
-      uses: actions/checkout@v6
+      uses: actions/checkout@v7
       with:
         submodules: recursive
     - name: Setup .NET
-      uses: actions/setup-dotnet@v5
+      uses: actions/setup-dotnet@v6
       with:
         dotnet-version: 10.0.x
     - name: Set Build Variables
@@ -60,18 +60,18 @@ jobs:
       run: |
         ./Build/Get-ReleaseNotes.ps1 -ChangelogPath ./CHANGELOG.md -Tag $env:REF_NAME -OutputPath ./release-notes.md -Repository $env:REPOSITORY -ServerUrl $env:SERVER_URL
     - name: Upload framework-dependent artifact
-      uses: actions/upload-artifact@v6
+      uses: actions/upload-artifact@v7
       with:
         name: UnrealAssetScout-${{ env.ARTIFACT_SUFFIX }}
         path: ./artifacts/win-x64-framework-dependent/*
     - name: Upload self-contained artifact
-      uses: actions/upload-artifact@v6
+      uses: actions/upload-artifact@v7
       with:
         name: UnrealAssetScout-${{ env.ARTIFACT_SUFFIX }}-self-contained
         path: ./artifacts/win-x64-self-contained/*
     - name: Create Release
       if: ${{ github.ref_type == 'tag' }}
-      uses: softprops/action-gh-release@v2
+      uses: softprops/action-gh-release@v3
       with:
         body_path: ./release-notes.md
         files: |
