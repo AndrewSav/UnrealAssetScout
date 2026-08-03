@@ -45,18 +45,11 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - If new UnrealAssetScout code logs through `Serilog.Log`, those logs may be hidden by default runs.
 
 
-## Classes comments
+## Code style
 
-We keep each top level class in the UnrealAssetScout project commented at the top, except for the main Program class. The class comment should explain the main purpose of the class, and explain where the class is used. Example:
-
-```
-// A Serilog sink that counts warnings and errors as they flow through the logging pipeline.
-// Created by RuntimeLogging.ReConfigureLogger when compact progress is enabled, returned to
-// Program.Main, and passed to CompactProgress to display live warn/error counts in the progress bar.
-internal sealed class LogLevelCounterSink : ILogEventSink
-```
-
-Every time your change code, make sure that class comments remain up to date.
+- Comment and naming conventions live in `CODE_STYLE.md`. Read it before writing code.
+- The four rules that come up most often: one top level type per file, named after the file; every top level class carries a header comment explaining its purpose and where it is used; comments anywhere else are rare and reserved for facts the code cannot state itself; identifiers are full words, not abbreviations.
+- Every time you change code, make sure that class header comments remain up to date.
 
 ## More local knowledge
 

@@ -34,4 +34,7 @@ internal class Options
     public bool LogLibraries { get; set; }
     public bool ScriptBytecode { get; set; }
     public List<string> JsonSkipTypeNames { get; set; } = [];
+    public bool Rebuild { get; set; }
+    public bool DryRun { get; set; }
+    public bool AcceptToolVersion { get; set; }
 }

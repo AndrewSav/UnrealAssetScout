@@ -92,15 +92,15 @@ public class ConfigOptionsTests
     public void ParseArgs_RemovedConfigAlias_ReturnsNull()
     {
         var tempDir = Path.Combine(Path.GetTempPath(), "UnrealAssetScout.Tests", Guid.NewGuid().ToString("N"));
-        var cfgFile = Path.Combine(tempDir, "test.rsp");
+        var configFile = Path.Combine(tempDir, "test.rsp");
 
         Directory.CreateDirectory(tempDir);
 
         try
         {
-            File.WriteAllText(cfgFile, "--game GAME_UE5_3");
+            File.WriteAllText(configFile, "--game GAME_UE5_3");
 
-            var options = ConfigOptionsSupport.ParseArgs(["--config", cfgFile]);
+            var options = ConfigOptionsSupport.ParseArgs(["--config", configFile]);
 
             Assert.Null(options);
         }
@@ -280,7 +280,7 @@ public class ConfigOptionsTests
                 "list",
                 "--paks", paksDir,
                 "--game", "GAME_UE5_3",
-                "-j", keyFile
+                "-A", keyFile
             ]);
 
             Assert.NotNull(options);
@@ -469,7 +469,7 @@ public class ConfigOptionsTests
                 "json",
                 "--paks", tempDir,
                 "--game", "GAME_UE5_3",
-                "-t", "UTexture", "USoundWave",
+                "-s", "UTexture", "USoundWave",
                 "--output", outputDir
             ]);
 
@@ -502,7 +502,7 @@ public class ConfigOptionsTests
                 "json",
                 "--paks", tempDir,
                 "--game", "GAME_UE5_3",
-                "-w", typeListPath,
+                "-S", typeListPath,
                 "--output", outputDir
             ]);
 
@@ -845,7 +845,7 @@ public class ConfigOptionsTests
         var tempDir = Path.Combine(Path.GetTempPath(), "UnrealAssetScout.Tests", Guid.NewGuid().ToString("N"));
         var paksDir = Path.Combine(tempDir, "paks");
         var keyFile = Path.Combine(tempDir, "aes.key");
-        var cfgFile = Path.Combine(tempDir, "test.rsp");
+        var configFile = Path.Combine(tempDir, "test.rsp");
 
         Directory.CreateDirectory(tempDir);
         Directory.CreateDirectory(paksDir);
@@ -853,14 +853,14 @@ public class ConfigOptionsTests
         try
         {
             File.WriteAllText(keyFile, "0xDEADBEEF1234");
-            File.WriteAllText(cfgFile, $$"""
+            File.WriteAllText(configFile, $$"""
                 list
                 --paks "{{paksDir}}"
                 --game GAME_UE5_3
                 --aes-file "{{keyFile}}"
                 """);
 
-            var options = ConfigOptionsSupport.ParseArgs(["@" + cfgFile]);
+            var options = ConfigOptionsSupport.ParseArgs(["@" + configFile]);
 
             Assert.NotNull(options);
             Assert.Equal("0xDEADBEEF1234", options.AesKey);

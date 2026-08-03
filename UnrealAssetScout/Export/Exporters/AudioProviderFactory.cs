@@ -19,13 +19,13 @@ internal static class AudioProviderFactory
 
     private static T? GetOrCreate<T>(ExportItemInfo item, Func<ExportItemInfo, T> factory) where T : class
     {
-        if (!Caches.TryGetValue(typeof(T), out var cacheObj))
+        if (!Caches.TryGetValue(typeof(T), out var cacheObject))
         {
-            cacheObj = new ProviderCache<T>();
-            Caches[typeof(T)] = cacheObj;
+            cacheObject = new ProviderCache<T>();
+            Caches[typeof(T)] = cacheObject;
         }
 
-        var cache = (ProviderCache<T>)cacheObj;
+        var cache = (ProviderCache<T>)cacheObject;
         if (cache.InitializationAttempted)
             return cache.Value;
 

@@ -26,4 +26,32 @@
         <PackageReference Include="Serilog.Sinks.File" Version="7.0.0" />
     </ItemGroup>
 
+    <Target Name="StampGitRevisions" BeforeTargets="GetAssemblyAttributes">
+        <Exec Command="git -C &quot;$(MSBuildProjectDirectory)\..&quot; rev-parse --short HEAD"
+              ConsoleToMSBuild="true" ContinueOnError="true" StandardOutputImportance="low">
+            <Output TaskParameter="ConsoleOutput" PropertyName="UasGitSha" />
+            <Output TaskParameter="ExitCode" PropertyName="UasGitExitCode" />
+        </Exec>
+        <Exec Command="git -C &quot;$(MSBuildProjectDirectory)\..\CUE4Parse&quot; rev-parse --short HEAD"
+              Condition="Exists('$(MSBuildProjectDirectory)\..\CUE4Parse\.git')"
+              ConsoleToMSBuild="true" ContinueOnError="true" StandardOutputImportance="low">
+            <Output TaskParameter="ConsoleOutput" PropertyName="Cue4ParseGitSha" />
+            <Output TaskParameter="ExitCode" PropertyName="Cue4ParseGitExitCode" />
+        </Exec>
+        <PropertyGroup>
+            <UasGitSha Condition="'$(UasGitExitCode)' != '0' or '$(UasGitSha)' == ''">unknown</UasGitSha>
+            <Cue4ParseGitSha Condition="'$(Cue4ParseGitExitCode)' != '0' or '$(Cue4ParseGitSha)' == ''">unknown</Cue4ParseGitSha>
+        </PropertyGroup>
+        <ItemGroup>
+            <AssemblyAttribute Include="System.Reflection.AssemblyMetadataAttribute">
+                <_Parameter1>UasGitSha</_Parameter1>
+                <_Parameter2>$(UasGitSha)</_Parameter2>
+            </AssemblyAttribute>
+            <AssemblyAttribute Include="System.Reflection.AssemblyMetadataAttribute">
+                <_Parameter1>Cue4ParseGitSha</_Parameter1>
+                <_Parameter2>$(Cue4ParseGitSha)</_Parameter2>
+            </AssemblyAttribute>
+        </ItemGroup>
+    </Target>
+
 </Project>

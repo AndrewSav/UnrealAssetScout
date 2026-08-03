@@ -8,17 +8,19 @@ using CUE4Parse.UE4.FMod;
 using CUE4Parse.UE4.Localization;
 using CUE4Parse.UE4.Shaders;
 using CUE4Parse.UE4.Wwise;
+using UnrealAssetScout.Incremental;
 
 namespace UnrealAssetScout.Export.Exporters;
 
 // Exports non-package files for simple mode, including known typed formats and raw-file fallback.
 // Called by ExportProcessor.ExportSimpleAsset so disk-write logic lives with other exporters while
-// ExportProcessor keeps ownership of runtime logging and mode-stat accounting.
+// ExportProcessor keeps ownership of runtime logging and mode-stat accounting. Forwards its optional
+// SourceRecorder to AudioBankExporter for Wwise media provenance.
 internal static class SimpleFileExporter
 {
-    internal static SimpleFileExportResult Export(ExportItemInfo item, string outputDir)
+    internal static SimpleFileExportResult Export(ExportItemInfo item, string outputDir, SourceRecorder? recorder)
     {
-        var (specializedResult, statKey) = TryExportKnownFile(item, outputDir);
+        var (specializedResult, statKey) = TryExportKnownFile(item, outputDir, recorder);
         if (specializedResult.Succeeded)
             return new SimpleFileExportResult(specializedResult, ExportAttemptResult.NotHandled(), statKey);
 
@@ -26,7 +28,7 @@ internal static class SimpleFileExporter
         return new SimpleFileExportResult(specializedResult, rawFallbackResult, statKey);
     }
 
-    private static (ExportAttemptResult Result, string StatKey) TryExportKnownFile(ExportItemInfo item, string outputDir)
+    private static (ExportAttemptResult Result, string StatKey) TryExportKnownFile(ExportItemInfo item, string outputDir, SourceRecorder? recorder)
     {
         var path = item.Path;
         var ext = Path.GetExtension(path).TrimStart('.').ToLowerInvariant();
@@ -47,8 +49,8 @@ internal static class SimpleFileExporter
                 "upipelinecache" => (SimpleExportSupport.TryExportJson<FPipelineCacheFile>(item, outputDir), ".upipelinecache"),
                 "stinfo" => (SimpleExportSupport.TryExportJson<FShaderTypeHashes>(item, outputDir), ".stinfo"),
                 "udic" => (OodleDictionaryExporter.TryExport(item, outputDir), ".udic"),
-                "bank" => (AudioBankExporter.TryExport<FModProvider>(item, outputDir), ".bank"),
-                "bnk" or "pck" => (AudioBankExporter.TryExport<WwiseProvider>(item, outputDir), "." + ext),
+                "bank" => (AudioBankExporter.TryExport<FModProvider>(item, outputDir, recorder), ".bank"),
+                "bnk" or "pck" => (AudioBankExporter.TryExport<WwiseProvider>(item, outputDir, recorder), "." + ext),
                 "awb" => (CriWareExporter.TryExport<AwbReader>(item, outputDir), ".awb"),
                 "acb" => (CriWareExporter.TryExport<AcbReader>(item, outputDir), ".acb"),
                 _ => (ExportAttemptResult.NotHandled(), string.Empty)

@@ -188,9 +188,9 @@ internal static class PackageLoadSupport
 
             ar.Position += 4; // TotalHeaderSize (read here because FileVersionUE < PACKAGE_SAVED_HASH)
 
-            var strLen = ar.Read<int>();
-            if (strLen > 0) ar.Position += strLen;
-            else if (strLen < 0) ar.Position += -strLen * 2;
+            var stringLength = ar.Read<int>();
+            if (stringLength > 0) ar.Position += stringLength;
+            else if (stringLength < 0) ar.Position += -stringLength * 2;
 
             var packageFlags = ar.Read<EPackageFlags>();
             return packageFlags.HasFlag(EPackageFlags.PKG_UnversionedProperties);

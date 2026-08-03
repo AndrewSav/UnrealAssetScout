@@ -2,6 +2,7 @@
 using System.IO;
 using Serilog;
 using Serilog.Context;
+using Serilog.Events;
 using Serilog.Sinks.SystemConsole.Themes;
 
 namespace UnrealAssetScout.Logging;
@@ -15,6 +16,7 @@ internal static class RuntimeLogging
     private const string PlainOutputProperty = "PlainOutput";
     private const string FileProgressProperty = "FileProgressPrefix";
     private const string ExternalProperty = "External";
+    private const string SummaryProperty = "Summary";
 
     internal static void ConfigureBootstrapLogger()
     {
@@ -41,6 +43,20 @@ internal static class RuntimeLogging
         {
             counterSink = new LogLevelCounterSink();
             loggerConfig.WriteTo.Sink(counterSink);
+
+            // Compact mode replaces console output with a progress bar, but errors and the run
+            // summary still have to reach the operator: without this the only trace of a run that
+            // stops is a non-zero exit code, and --no-log removes even the log file it would
+            // otherwise be written to. On standard error, so the progress bar keeps stdout.
+            loggerConfig.WriteTo.Logger(lc =>
+            {
+                lc.Filter.ByIncludingOnly(e =>
+                    e.Level >= LogEventLevel.Error || e.Properties.ContainsKey(SummaryProperty));
+                lc.WriteTo.Console(
+                    outputTemplate: "{Message:lj}{NewLine}{Exception}",
+                    theme: ConsoleTheme.None,
+                    standardErrorFromLevel: LogEventLevel.Verbose);
+            });
         }
         else
         {
@@ -77,6 +93,11 @@ internal static class RuntimeLogging
             : CreateSilentLogger();
         return counterSink;
     }
+
+    // Summary lines describe the run itself rather than any one file, so they stay visible under
+    // compact progress, where everything else on the console is replaced by the progress bar.
+    internal static void LogSummary(string messageTemplate, params object?[] arguments) =>
+        AppLog.ForContext(SummaryProperty, true).Information(messageTemplate, arguments);
 
     internal static void LogPlainOutputLine(string line) =>
         AppLog.ForContext(PlainOutputProperty, true).Information("{Line}", line);

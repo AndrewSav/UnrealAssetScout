@@ -2,7 +2,19 @@
 
 ## Unreleased
 
-- None
+- Incremental export. When a manifest is present in the output directory, an export run only
+  redoes work whose inputs changed, and deletes outputs no longer produced. `--rebuild` forces a
+  full run, `--dry-run` reports without writing, and `--accept-tool-version` proceeds past a uas
+  or CUE4Parse version change, accepting that output may then not match a full rebuild.
+- Short option letters reassigned so they are mnemonic, using capitals where a related pair exists:
+  `-A` aes-file, `-T` types, `-m` mark-usmap, `-i` log-counter, `-L` log-append, `-D` log-libs,
+  `-F` list format, `-c` compact, `-s` skip-types, `-S` skip-types-file, `-b` script-bytecode, and
+  new `-r` rebuild, `-n` dry-run, `-q` accept-tool-version. Long options are unchanged.
+- Errors are written to standard error under `--compact`. Compact progress previously replaced
+  all console output, so a run that stopped reported only a non-zero exit code, and with
+  `--no-log` the reason was not recorded anywhere.
+- The test suite runs before a release is published, so a tag cannot be cut from a commit whose
+  tests fail.
 
 ## v0.2.1
 

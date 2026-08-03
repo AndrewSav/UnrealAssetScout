@@ -15,6 +15,8 @@ internal sealed class JsonPackageProcessor(string outputDir, bool verbose, IRead
 {
     private readonly HashSet<string> _jsonSkippedTypeNameSet = new(jsonSkipTypeNames, StringComparer.OrdinalIgnoreCase);
 
+    internal bool SkippedBySkipList { get; private set; }
+
     public override void ProcessPackage(PackageExportContext packageContext)
     {
         var exports = packageContext.Package!.GetExports().ToList();
@@ -22,6 +24,7 @@ internal sealed class JsonPackageProcessor(string outputDir, bool verbose, IRead
         // A package is skipped only when every export is specialized
         if (ShouldSkipJsonExport(exports, _jsonSkippedTypeNameSet))
         {
+            SkippedBySkipList = true;
             if (Verbose)
                 AppLog.Information("[SKIPPED]  {Prefix}{Path} (specialized export asset)", packageContext.Prefix, packageContext.Path);
             return;

@@ -39,6 +39,10 @@ jobs:
 
         "VERSION=$version" >> $env:GITHUB_ENV
         "ARTIFACT_SUFFIX=$artifactSuffix" >> $env:GITHUB_ENV
+    # Gates the release itself: CI already runs these on push and pull request, but a tag can be
+    # pushed at any commit, so nothing else guarantees they passed on the one being released.
+    - name: Test
+      run: dotnet test UnrealAssetScout.Tests/UnrealAssetScout.Tests.csproj -c Release
     - name: Build for Windows
       run: |
         dotnet publish UnrealAssetScout/UnrealAssetScout.csproj -c Release --runtime win-x64 -o ./artifacts/win-x64-framework-dependent -p:PublishSingleFile=true -p:SelfContained=false -p:Version=$env:VERSION -p:AssemblyVersion=$env:VERSION

@@ -7,12 +7,12 @@ using CUE4Parse_Conversion.Textures.BC;
 using CUE4Parse.Compression;
 using CUE4Parse.Encryption.Aes;
 using CUE4Parse.FileProvider;
-using CUE4Parse.MappingsProvider;
 using CUE4Parse.MappingsProvider.Usmap;
 using CUE4Parse.UE4.Objects.Core.Misc;
 using CUE4Parse.UE4.Versions;
 using UnrealAssetScout.Config;
 using UnrealAssetScout.Export;
+using UnrealAssetScout.Incremental;
 using UnrealAssetScout.List;
 using UnrealAssetScout.Logging;
 using UnrealAssetScout.Statistics;
@@ -88,7 +88,7 @@ public static class Program
                 new VersionContainer(options.Game!.Value),
                 StringComparer.OrdinalIgnoreCase);
 
-            provider.ReadScriptData = options.Mode == ExportMode.Json && options.ScriptBytecode;
+            provider.ReadScriptData = options is { Mode: ExportMode.Json, ScriptBytecode: true };
 
             if (options.UsmapPath is not null)
                 provider.MappingsContainer = new FileUsmapTypeMappingsProvider(options.UsmapPath);
@@ -154,17 +154,12 @@ public static class Program
                 }
                 else
                 {
-                    runStats = ExportProcessor.ProcessFiles(
-                        provider,
-                        options.Mode.Value,
-                        options.OutputDirectory!,
-                        options.Filter,
-                        options.Verbose,
-                        options.MarkUsmap,
-                        compactCounterSink,
-                        typeFilteredPaths,
-                        options.LogCounter,
-                        options.JsonSkipTypeNames);
+                    var (exitCode, incrementalStats) = IncrementalRunner.Run(
+                        provider, options, compactCounterSink, typeFilteredPaths);
+                    if (exitCode != 0)
+                        return exitCode;
+
+                    runStats = incrementalStats;
                 }
             }
 

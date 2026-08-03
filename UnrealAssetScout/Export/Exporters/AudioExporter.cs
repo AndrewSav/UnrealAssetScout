@@ -10,19 +10,23 @@ using CUE4Parse.UE4.Assets.Exports.Fmod;
 using CUE4Parse.UE4.Assets.Exports.Harmonix;
 using CUE4Parse.UE4.Assets.Exports.Sound;
 using CUE4Parse.UE4.Assets.Exports.Wwise;
+using CUE4Parse.FileProvider.Objects;
 using CUE4Parse.UE4.CriWare;
 using CUE4Parse.UE4.FMod;
 using CUE4Parse.UE4.Wwise;
+using UnrealAssetScout.Incremental;
 using UnrealAssetScout.Package;
 
 namespace UnrealAssetScout.Export.Exporters;
 
 // Exports supported Unreal audio assets to decoded or extracted audio files on disk.
 // Called by ExportProcessor audio-mode handlers when a package export matches one of the supported
-// audio asset types.
+// audio asset types. When a SourceRecorder is supplied, also records the container-path provenance
+// of any Wwise media a bank or event export reads, or marks the source as reading external Wwise
+// media when it does not have one.
 internal static class AudioExporter
 {
-    internal static ExportAttemptResult TryExport(UObject export, ExportItemInfo item, PackageExportContext packageContext, string outputDir)
+    internal static ExportAttemptResult TryExport(UObject export, ExportItemInfo item, PackageExportContext packageContext, string outputDir, SourceRecorder? recorder)
     {
         try
         {
@@ -40,8 +44,8 @@ internal static class AudioExporter
                         "wem",
                         wemFile.GetData(),
                         export.Name),
-                UAkAudioBank audioBank => TryExportWwiseBank(audioBank, item, packagePath, outputDir),
-                UAkAudioEvent audioEvent => TryExportWwiseEvent(audioEvent, item, packagePath, outputDir),
+                UAkAudioBank audioBank => TryExportWwiseBank(audioBank, item, packagePath, outputDir, recorder),
+                UAkAudioEvent audioEvent => TryExportWwiseEvent(audioEvent, item, packagePath, outputDir, recorder),
                 UFMODEvent fmodEvent => TryExportFmodEvent(fmodEvent, item, packagePath, outputDir),
                 UFMODBank fmodBank => TryExportFmodBank(fmodBank, item, packagePath, outputDir),
                 USoundAtomCueSheet cueSheet => TryExportCriWare(cueSheet, item, packagePath, outputDir),
@@ -63,30 +67,53 @@ internal static class AudioExporter
         }
     }
 
-    private static ExportAttemptResult TryExportWwiseBank(UAkAudioBank audioBank, ExportItemInfo item, string packagePath, string outputDir)
+    private static ExportAttemptResult TryExportWwiseBank(UAkAudioBank audioBank, ExportItemInfo item, string packagePath, string outputDir, SourceRecorder? recorder)
     {
         var wwiseProvider = AudioProviderFactory.GetProvider<WwiseProvider>(item);
         if (wwiseProvider is null)
             return ExportAttemptResult.NotHandled();
+
+        var sounds = wwiseProvider.ExtractBankSounds(audioBank);
+        RecordWwiseProvenance(sounds, recorder);
 
         return TrySaveAudioFiles(
             packagePath,
             outputDir,
             audioBank.Name,
-            wwiseProvider.ExtractBankSounds(audioBank).Select(sound => (sound.OutputPath, sound.Extension, Data: sound.GetData())));
+            sounds.Select(sound => (sound.OutputPath, sound.Extension, Data: sound.GetData())));
     }
 
-    private static ExportAttemptResult TryExportWwiseEvent(UAkAudioEvent audioEvent, ExportItemInfo item, string packagePath, string outputDir)
+    private static ExportAttemptResult TryExportWwiseEvent(UAkAudioEvent audioEvent, ExportItemInfo item, string packagePath, string outputDir, SourceRecorder? recorder)
     {
         var wwiseProvider = AudioProviderFactory.GetProvider<WwiseProvider>(item);
         if (wwiseProvider is null)
             return ExportAttemptResult.NotHandled();
 
+        var sounds = wwiseProvider.ExtractAudioEventSounds(audioEvent);
+        RecordWwiseProvenance(sounds, recorder);
+
         return TrySaveAudioFiles(
             packagePath,
             outputDir,
             audioEvent.Name,
-            wwiseProvider.ExtractAudioEventSounds(audioEvent).Select(sound => (sound.OutputPath, sound.Extension, Data: sound.GetData())));
+            sounds.Select(sound => (sound.OutputPath, sound.Extension, Data: sound.GetData())));
+    }
+
+    private static void RecordWwiseProvenance(IEnumerable<WwiseExtractedSound> sounds, SourceRecorder? recorder)
+    {
+        if (recorder is null)
+            return;
+
+        foreach (var sound in sounds)
+        {
+            if (sound.Data is not FGameFileDeferredByteData gameFileData)
+                continue;
+
+            if (gameFileData.File is OsGameFile)
+                recorder.MarkExternalWwise();
+            else
+                recorder.AddMediaDependency(gameFileData.File.Path);
+        }
     }
 
     private static ExportAttemptResult TryExportFmodEvent(UFMODEvent fmodEvent, ExportItemInfo item, string packagePath, string outputDir)

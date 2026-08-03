@@ -56,23 +56,23 @@ UnrealAssetScout export <mode> [options]
 - `-p`, `--paks` (required): Path to the game's `Paks` directory
 - `-g`, `--game` (required): Value from CUE4Parse `EGame` enum (example: `GAME_UE5_4`), that indicate the Unreal Engine version the game uses. You can usually guess this value from the Details tab of Properties dialog of the game exe file.
 - `-a`, `--aes`: AES-256 key (hex) for encrypted containers. Some games require an AES key for all relevant archives, some only for part of the content, and some not at all.
-- `-j`, `--aes-file`: Path to a text file whose first line is the AES-256 key. If you pass both `--aes` and `--aes-file`, the file value wins.
+- `-A`, `--aes-file`: Path to a text file whose first line is the AES-256 key. If you pass both `--aes` and `--aes-file`, the file value wins.
 - `-u`, `--usmap`: Path to `.usmap` file for unversioned assets. Some files can be read without mappings, while others need them for unversioned property decoding.
 - `-f`, `--filter`: Regex path filter
 - `-e`, `--expression`: Filter packages by their cached export summary using a boolean expression such as `UTexture and %exports > 1`. This only works together with `--types`. See below for more details about expression filtering.
-- `-c`, `--types`: Path to a CSV produced by `list --format types`. UnrealAssetScout reads that file as cached package-summary data for `--expression`, instead of reloading every package just to decide what to include. This only works together with `--expression`. Warning: `--types` uses a previously generated `list --format types` CSV file as cached package summary data. It is your responsibility to regenerate that file whenever the game's pak/utoc contents change; otherwise `--expression` filtering can be stale or incorrect.
-- `-s`, `--mark-usmap`: Prefix paths with `[ ]` or `[*]` for usmap requirement hints. This helps identify files that likely need mappings.
-- `-r`, `--log-counter`: Prefix file-associated log lines in the log file with `[current/total]`. This only affects file logging, so it has no effect when `--no-log` is set. This is a debug-oriented option and is usually not needed; the exact details of how it works are not important and may change over time.
+- `-T`, `--types`: Path to a CSV produced by `list --format types`. UnrealAssetScout reads that file as cached package-summary data for `--expression`, instead of reloading every package just to decide what to include. This only works together with `--expression`. Warning: `--types` uses a previously generated `list --format types` CSV file as cached package summary data. It is your responsibility to regenerate that file whenever the game's pak/utoc contents change; otherwise `--expression` filtering can be stale or incorrect.
+- `-m`, `--mark-usmap`: Prefix paths with `[ ]` or `[*]` for usmap requirement hints. This helps identify files that likely need mappings.
+- `-i`, `--log-counter`: Prefix file-associated log lines in the log file with `[current/total]`. This only affects file logging, so it has no effect when `--no-log` is set. This is a debug-oriented option and is usually not needed; the exact details of how it works are not important and may change over time.
 - `-l`, `--log`: Log file path (default: `.\<exe-name>.log`). This only matters when file logging is enabled.
-- `-y`, `--log-append`: Append to the existing log file instead of overwriting it. This only matters when file logging is enabled.
+- `-L`, `--log-append`: Append to the existing log file instead of overwriting it. This only matters when file logging is enabled.
 - `-z`, `--no-log`: Disable file logging completely. If you also pass `--log`, `--log-append`, or `--log-counter`, those settings have no effect for that run.
-- `-b`, `--log-libs`: Also log CUE4Parse warnings/errors and possibly other dependency warnings/errors. These external logs are suppressed by default so they do not pollute normal list output, especially CSV-oriented `list --format types` runs. This option is generally not recommended with `export`, where dependency noise can make progress output and failures harder to read.
+- `-D`, `--log-libs`: Also log CUE4Parse warnings/errors and possibly other dependency warnings/errors. These external logs are suppressed by default so they do not pollute normal list output, especially CSV-oriented `list --format types` runs. This option is generally not recommended with `export`, where dependency noise can make progress output and failures harder to read.
 
 These options are defined on the root command and inherited by both `list` and `export`.
 
 ### `list`
 
-- `-t`, `--format`: `list:` Output format: `List`, `Tree`, or `Types`.
+- `-F`, `--format`: `list:` Output format: `List`, `Tree`, or `Types`.
   - `List` is the default and prints matching file paths, optionally with `--mark-usmap`.
   - `Tree` renders a folder-only ASCII tree reconstructed from the mounted file paths. File leaves are omitted, so this shows directory structure only. Because the output contains folders only, `--mark-usmap` has no effect in this format
   - `Types` emits CSV with the header row `Path,Type,Count`. Files with no detected exports emit a single row with empty `Type` and `Count` fields. Files with exports emit one row per export type with that type's count. This is intended for external analysis so you can inspect archive type composition, derive useful filters, and identify which asset types matter for a game. This CSV is also the input for expression filtering: save it with `--file`, then pass it later through `--types` together with `--expression` to filter `list` or `export` runs by cached package composition. The `Types` format requires loading package files to inspect their exports, so list runs can be significantly slower than plain path listing. Because the `path` field is emitted as raw CSV data, `--mark-usmap` has no effect in this format.
@@ -93,12 +93,18 @@ These options are defined on the root command and inherited by both `list` and `
   - `Verse`: Processes only `.uasset` packages and targets Verse digest assets. Currently this means `UVerseDigest` exports.
 
 - `-o`, `--output` (required): `export:` Output directory
-- `-v`, `--verbose`: `export:` Log skipped files
-- `-x`, `--compact`: `export:` Compact progress display. When file logging is enabled, detailed logs still go to the log file; with `--no-log`, you only get the compact console progress output.
-- `-t`, `--skip-types`: `export json:` Replaces the built-in skip list with the specified type names, using normal whitespace-separated command-line values. Unless a higher-precedence skip-type option is also present. See `Default JSON Skip Types` below for the built-in list this replaces.
-- `-w`, `--skip-types-file`: `export json:` Path to a text file containing skip type names. Commas and whitespace are treated as separators, so the file can use one type per line, multiple space-separated types on a line, or comma-separated entries. If both `--skip-types` and `--skip-types-file` are present, the file wins. See `Default JSON Skip Types` below for the built-in list this overrides.
+- `-v`, `--verbose`: `export:` Log skipped files, including the ones an incremental run skips as unchanged, and add per-step planning timings with a breakdown of which rule marked each source stale
+- `-c`, `--compact`: `export:` Compact progress display. When file logging is enabled, detailed logs still go to the log file; with `--no-log`, the progress display is the only per-file output. Errors and the planning and commit summaries are written to standard error either way, so a run that stops always says why.
+- `-s`, `--skip-types`: `export json:` Replaces the built-in skip list with the specified type names, using normal whitespace-separated command-line values. Unless a higher-precedence skip-type option is also present. See `Default JSON Skip Types` below for the built-in list this replaces.
+- `-S`, `--skip-types-file`: `export json:` Path to a text file containing skip type names. Commas and whitespace are treated as separators, so the file can use one type per line, multiple space-separated types on a line, or comma-separated entries. If both `--skip-types` and `--skip-types-file` are present, the file wins. See `Default JSON Skip Types` below for the built-in list this overrides.
 - `-k`, `--no-skip-types`: `export json:` Disable the built-in skip list entirely. See `Default JSON Skip Types` below for the built-in list this disables. This has the highest precedence and overrides both `--skip-types-file` and `--skip-types`.
-- `-d`, `--script-bytecode`: `export json:` Serialize Unreal script bytecode into JSON output when available. This is ignored for other export modes.
+- `-b`, `--script-bytecode`: `export json:` Serialize Unreal script bytecode into JSON output when available. This is ignored for other export modes.
+
+Export runs are incremental whenever `.uas-manifest.json` from a previous run is present in the output directory: unchanged assets are left untouched, changed and new assets are re-exported, and outputs whose source is gone are deleted. The following options control that behaviour.
+
+- `-r`, `--rebuild`: `export:` Ignore any existing manifest, export everything, and replace the manifest. Use this to recover from a corrupt manifest, or whenever you want a guaranteed from-scratch dump.
+- `-n`, `--dry-run`: `export:` Report what an incremental run would export, delete and skip, then stop without writing anything.
+- `-q`, `--accept-tool-version`: `export:` Proceed when the running `uas` or CUE4Parse version is not one recorded in the manifest. Outputs made by the earlier version are carried forward rather than re-exported, so the dump is no longer guaranteed to match a full rebuild; every subsequent run reports that it is a mixture. Without this option a version change stops the run and suggests `--rebuild`.
 
 Mode values are parsed case-insensitively, so `export json` and `export Json` both work.
 
