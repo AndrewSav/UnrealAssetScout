@@ -67,6 +67,7 @@ internal static class ConfigOptionsSupport
         root.Subcommands.Add(listCommand);
         root.Subcommands.Add(exportCommand);
         ConfigureHelpOption(root);
+        ConfigureVersionOption(root);
         var helpAction = root.Options.OfType<HelpOption>().Single().Action;
         var versionAction = root.Options.OfType<VersionOption>().Single().Action;
 
@@ -268,6 +269,11 @@ internal static class ConfigOptionsSupport
         helpOption.Action = new DocumentationLinkHelpAction(
             (SynchronousCommandLineAction)helpOption.Action!,
             DocumentationUrl);
+    }
+
+    private static void ConfigureVersionOption(RootCommand root)
+    {
+        root.Options.OfType<VersionOption>().Single().Action = new BuildVersionAction();
     }
 
     private sealed record RootOptions(

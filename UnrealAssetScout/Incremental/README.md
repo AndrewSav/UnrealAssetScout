@@ -53,7 +53,7 @@ skipped package leaving a stale file nobody notices.
 | `IoStoreTocFingerprints` | Re-reads `.utoc` metadata to map an IoStore chunk to its stored hash |
 | `UsmapFingerprints`, `UsmapSnapshot`, `UsmapTypeNode` | Reduces a loaded usmap to per-type and per-enum semantic fingerprints plus a reference graph |
 | `UsmapClosure` | Expands a recorded type name into everything reachable from it, memoised |
-| `ToolVersions`, `ToolVersionPair` | The current build's identity, for the tool gate |
+| `ToolVersionPair` | The current build's identity, for the tool gate; built from `Utils.AppVersion` |
 | `PlanInputs`, `PlanResult`, `ExportPlan`, `SourceCandidate` | The planner's input and output shapes |
 | `ExportPlanner` | The gate, the direct staleness rules, propagation to a fixpoint, and the work list / carry-forward split |
 | `StaleReason`, `PlanStatistics` | Which rule first marked each source stale, and the counts and previous cost behind the summary lines a run prints |

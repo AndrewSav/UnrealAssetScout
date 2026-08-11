@@ -11,6 +11,13 @@
         <AssemblyVersion>0.0.0.0</AssemblyVersion>
     </PropertyGroup>
 
+    <!-- Set by the release workflow (framework-dependent / self-contained) so a published build
+         knows which release asset to download when updating itself. Local builds carry no flavour,
+         and that absence is what marks them as unpublished. -->
+    <ItemGroup Condition="'$(BuildFlavor)' != ''">
+        <AssemblyMetadata Include="BuildFlavor" Value="$(BuildFlavor)" />
+    </ItemGroup>
+
     <ItemGroup>
         <ProjectReference Include="..\CUE4Parse\CUE4Parse\CUE4Parse.csproj" />
         <ProjectReference Include="..\CUE4Parse\CUE4Parse-Conversion\CUE4Parse-Conversion.csproj" />

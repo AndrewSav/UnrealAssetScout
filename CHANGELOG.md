@@ -2,7 +2,9 @@
 
 ## Unreleased
 
-- None
+- Switched to IncludeNativeLibrariesForSelfExtract=true for the releases.
+- Reworked app version usage so it is consisten across display, logs and manifests.
+- Every run logs its version as the first line, so a log file identifies the build that wrote it.
 
 ## v0.3.0
 

@@ -55,6 +55,8 @@ public static class Program
                 logFilePath,
                 options.LogLibraries);
 
+            AppLog.Information("uas {Version}", AppVersion.DisplayText);
+
             if (fileLoggingEnabled)
             {
                 if (compactProgressEnabled)
