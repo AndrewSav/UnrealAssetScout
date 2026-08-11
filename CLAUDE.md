@@ -17,6 +17,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - When preparing a release, run a local `dotnet build UnrealAssetScout.slnx` before making changelog changes to confirm the repo is in a buildable state.
 - When preparing a release, leave the default local `Version` and `AssemblyVersion` at `0.0.0.0`; do not bump them for releases.
 - When preparing a release, after moving entries out of `Unreleased`, leave a single bullet under `## Unreleased` that says `None`.
+- When preparing a release, review every change going into it and ask whether any of them can make an export produce different bytes for inputs that did not change. If so, `Incremental.ExportCompatibility.Version` must be bumped, and it is a release blocker if it has not been. It is deliberately not the release version: an upgrade that does not change exporting must compare equal, or every existing dump is forced through `--accept-tool-version` for nothing. Forgetting to bump it is the opposite failure and the worse one, because stale outputs are carried forward silently.
 
 ## Line endings
 

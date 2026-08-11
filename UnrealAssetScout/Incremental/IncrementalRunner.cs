@@ -63,7 +63,7 @@ internal static class IncrementalRunner
             Manifest: previous,
             Mode: mode.ToString().ToLowerInvariant(),
             Game: options.Game!.Value.ToString(),
-            Tool: new ToolVersionPair(AppVersion.UasVersionText, AppVersion.Cue4ParseVersionText),
+            Tool: new ToolVersionPair(ExportCompatibility.Version, AppVersion.Cue4ParseGitSha),
             Containers: containers,
             SkipTypes: options.JsonSkipTypeNames,
             ScriptBytecode: effectiveScriptBytecode,

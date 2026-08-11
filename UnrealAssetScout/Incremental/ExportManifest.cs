@@ -13,6 +13,7 @@ internal sealed class ExportManifest
     [JsonPropertyName("mode")] public string Mode { get; set; } = string.Empty;
     [JsonPropertyName("game")] public string Game { get; set; } = string.Empty;
     [JsonPropertyName("tool")] public List<ToolVersionPair> Tool { get; set; } = [];
+    [JsonPropertyName("uasVersion")] public string UasVersion { get; set; } = string.Empty;
     [JsonPropertyName("skipTypes")] public List<string> SkipTypes { get; set; } = [];
     [JsonPropertyName("scriptBytecode")] public bool ScriptBytecode { get; set; }
     [JsonPropertyName("containers")] public List<string> Containers { get; set; } = [];

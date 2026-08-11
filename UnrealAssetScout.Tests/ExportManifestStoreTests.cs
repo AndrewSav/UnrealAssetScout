@@ -12,7 +12,7 @@ public sealed class ExportManifestStoreTests
         {
             Mode = "textures",
             Game = "GAME_UE5_1",
-            Tool = [new ToolVersionPair("0.2.1.0+1a2a277", "1.0.0.0+a098f0b6")],
+            Tool = [new ToolVersionPair(1, "a098f0b6")],
             SkipTypes = ["UTexture2D"],
             ScriptBytecode = true,
             Containers = ["Pal-Windows.pak"],
@@ -47,7 +47,8 @@ public sealed class ExportManifestStoreTests
         Assert.Equal(ExportManifestStore.CurrentSchema, loaded.Schema);
         Assert.Equal("textures", loaded.Mode);
         Assert.Equal("GAME_UE5_1", loaded.Game);
-        Assert.Equal("1.0.0.0+a098f0b6", Assert.Single(loaded.Tool).Cue4Parse);
+        Assert.Equal("a098f0b6", Assert.Single(loaded.Tool).Cue4Parse);
+        Assert.Equal(1, Assert.Single(loaded.Tool).Export);
         Assert.Equal(["UTexture2D"], loaded.SkipTypes);
         Assert.True(loaded.ScriptBytecode);
         Assert.Equal(["Pal-Windows.pak"], loaded.Containers);

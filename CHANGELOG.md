@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+- None
+
+## v0.4.0
+
+- Upgrades will no longer produce a compatibility warning if the upgrade did not change export format.
 - Switched to IncludeNativeLibrariesForSelfExtract=true for the releases.
 - Reworked app version usage so it is consistent across display, logs and manifests.
 - Every run logs its version as the first line, so a log file identifies the build that wrote it.

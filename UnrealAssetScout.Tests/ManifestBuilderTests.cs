@@ -7,7 +7,7 @@ public sealed class ManifestBuilderTests
     private static ManifestBuilder NewBuilder() => new(
         mode: "json",
         game: "GAME_UE5_1",
-        tool: [new ToolVersionPair("1+a", "2+b")],
+        tool: [new ToolVersionPair(1, "b")],
         skipTypes: [],
         scriptBytecode: false,
         containers: ["a.pak"]);

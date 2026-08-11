@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Linq;
 using System.Reflection;
-using CUE4Parse.UE4.Pak.Objects;
 
 namespace UnrealAssetScout.Utils;
 
@@ -28,12 +27,8 @@ internal static class AppVersion
 
     internal static string Cue4ParseGitSha { get; } = ReadMetadata("Cue4ParseGitSha") ?? UnknownRevision;
 
-    // The manifest tool gate matches these verbatim against what a manifest already records.
+    // The manifest tool gate matches this verbatim against what a manifest already records.
     internal static string UasVersionText => $"{VersionText}+{UasGitSha}";
-
-    // CUE4Parse stamps four parts, and it is not ours to re-render.
-    internal static string Cue4ParseVersionText { get; } =
-        $"{typeof(FPakEntry).Assembly.GetName().Version?.ToString() ?? "0.0.0.0"}+{Cue4ParseGitSha}";
 
     // For example "0.3.0+1c9b714 (self-contained)".
     internal static string DisplayText => $"{VersionText}+{UasGitSha} ({BuildFlavor ?? "local build"})";

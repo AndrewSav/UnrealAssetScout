@@ -44,8 +44,8 @@ internal static class ExportPlanner
         {
             var recorded = manifest.Tool[^1];
             return PlanResult.Failed(
-                $"manifest records uas {recorded.Uas} with CUE4Parse {recorded.Cue4Parse}; " +
-                $"this run is uas {inputs.Tool.Uas} with CUE4Parse {inputs.Tool.Cue4Parse}. " +
+                $"manifest records export format {recorded.Export} with CUE4Parse {recorded.Cue4Parse}; " +
+                $"this run is export format {inputs.Tool.Export} with CUE4Parse {inputs.Tool.Cue4Parse}. " +
                 "Pass --rebuild for a guaranteed-exact dump, or --accept-tool-version to carry " +
                 "existing outputs forward");
         }

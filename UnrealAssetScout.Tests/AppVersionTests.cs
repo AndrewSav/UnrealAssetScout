@@ -28,38 +28,34 @@ public sealed class AppVersionTests
     }
 
     [Fact]
-    public void VersionTexts_CarryBothHalvesForBothComponents()
+    public void UasVersionText_CarriesBothHalves()
     {
         Assert.Contains("+", AppVersion.UasVersionText);
-        Assert.Contains("+", AppVersion.Cue4ParseVersionText);
     }
 
     [Fact]
-    public void VersionTexts_EndWithTheStampedRevisions()
+    public void UasVersionText_EndsWithTheStampedRevision()
     {
         var metadata = typeof(AppVersion).Assembly
             .GetCustomAttributes<AssemblyMetadataAttribute>()
             .ToList();
 
         var uasGitSha = metadata.FirstOrDefault(attribute => attribute.Key == "UasGitSha")?.Value;
-        var cue4ParseGitSha = metadata.FirstOrDefault(attribute => attribute.Key == "Cue4ParseGitSha")?.Value;
 
         // An absent attribute means the StampGitRevisions target did not run at all, which is a
         // stronger failure than a fallback value.
         Assert.False(string.IsNullOrEmpty(uasGitSha));
-        Assert.False(string.IsNullOrEmpty(cue4ParseGitSha));
 
         Assert.EndsWith($"+{uasGitSha}", AppVersion.UasVersionText);
-        Assert.EndsWith($"+{cue4ParseGitSha}", AppVersion.Cue4ParseVersionText);
     }
 
     [Fact]
-    public void Cue4ParseVersionText_IsNotEmptyBeforeItsRevisionIsRead()
+    public void Cue4ParseGitSha_IsABareRevisionWithNoVersion()
     {
-        // Static initialisers run in declaration order, so a Cue4ParseVersionText declared above
-        // Cue4ParseGitSha would silently interpolate an empty revision.
-        Assert.DoesNotContain("+$", AppVersion.Cue4ParseVersionText);
-        Assert.False(AppVersion.Cue4ParseVersionText.EndsWith('+'));
+        // The manifest records this verbatim. CUE4Parse is pinned by commit, so a version attached
+        // here would be noise that changes on its own schedule.
+        Assert.DoesNotContain("+", AppVersion.Cue4ParseGitSha);
+        Assert.NotEmpty(AppVersion.Cue4ParseGitSha);
     }
 
     [Fact]

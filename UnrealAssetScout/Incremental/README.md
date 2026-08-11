@@ -12,9 +12,10 @@ The correctness bar is **bit-exact**: an incremental run and a from-scratch run 
 inputs must produce identical output files. That bar is relaxed in exactly two ways, both
 explicit rather than accidental:
 
-- An accepted tool version change. `--accept-tool-version` carries outputs from an older uas or
-  CUE4Parse build forward unchanged, trading bit-exactness for not re-running everything on every
-  upgrade. The dump is then a known mixture of tool versions, and every run says so.
+- An accepted tool change. `--accept-tool-version` carries outputs produced under a different
+  export-behaviour number or a different CUE4Parse commit forward unchanged, trading bit-exactness
+  for not re-running everything. The dump is then a known mixture, and every run says so. An
+  upgrade that does not change exporting is not such a change and needs no override.
 - Untracked files. Anything in the output tree the manifest never recorded is left alone. A
   from-scratch run would not produce such a file, so its presence is the one way an incremental
   dump can differ from a full one without anyone having opted in.
@@ -53,7 +54,7 @@ skipped package leaving a stale file nobody notices.
 | `IoStoreTocFingerprints` | Re-reads `.utoc` metadata to map an IoStore chunk to its stored hash |
 | `UsmapFingerprints`, `UsmapSnapshot`, `UsmapTypeNode` | Reduces a loaded usmap to per-type and per-enum semantic fingerprints plus a reference graph |
 | `UsmapClosure` | Expands a recorded type name into everything reachable from it, memoised |
-| `ToolVersionPair` | The current build's identity, for the tool gate; built from `Utils.AppVersion` |
+| `ExportCompatibility`, `ToolVersionPair` | What a dump was produced by, for the tool gate: this build's export-behaviour number and the pinned CUE4Parse commit |
 | `PlanInputs`, `PlanResult`, `ExportPlan`, `SourceCandidate` | The planner's input and output shapes |
 | `ExportPlanner` | The gate, the direct staleness rules, propagation to a fixpoint, and the work list / carry-forward split |
 | `StaleReason`, `PlanStatistics` | Which rule first marked each source stale, and the counts and previous cost behind the summary lines a run prints |
@@ -473,6 +474,28 @@ of on every invocation. A downgrade to a pair already in the array is silent for
 which is correct: the outputs already on disk from that pair are no worse for it. Nothing separate
 records that an override ever happened, because the array already says so on its own.
 
+### Why does the gate compare an export-behaviour number rather than the uas version?
+
+The gate exists to answer whether outputs already on disk still match what this build would
+produce. A release that changes nothing about exporting produces identical bytes, so a release
+version fails the gate on every upgrade, costs an `--accept-tool-version`, and leaves the dump
+marked as a mixture, all for output that cannot differ. `ExportCompatibility.Version` is bumped by
+hand only when a change can alter exported bytes, so an upgrade that does not touch exporting
+compares equal and passes silently.
+
+That moves the failure mode rather than removing it. A spurious gate is safe; forgetting to bump
+the number carries stale outputs forward with no warning at all, and the only way to notice is to
+diff against a full rebuild. Deriving the number instead, by hashing the exporter sources, was
+rejected: a comment edit or a rename would invalidate every dump on disk, which is the same false
+invalidation in a less predictable form. The obligation is therefore documented as a release gate
+in `CLAUDE.md` rather than enforced mechanically.
+
+The CUE4Parse half is a bare commit hash. CUE4Parse is pinned as a submodule by commit, so the hash
+is the whole of its identity; the version it declares moves on its own schedule and says nothing
+about which code is compiled in. A version recorded here would also be unreliable: a command-line
+`-p:Version` is a global MSBuild property that reaches every project in the graph, so a release
+build stamps CUE4Parse's assembly with the uas version.
+
 ### Why is `scriptBytecode` recorded as the effective value rather than the flag?
 
 The flag only affects output in `json` mode; in every other mode CUE4Parse's bytecode extraction
@@ -785,7 +808,9 @@ uses to resolve an import by id is exact by construction instead.
 **Exempting the default local development version from the tool gate.** Considered, since local
 builds share one nominal version and trip the gate on every rebuild during development. Rejected
 because it would disable the gate specifically where output is most volatile: exactly the builds
-most likely to actually change behaviour between runs.
+most likely to actually change behaviour between runs. The question is now largely moot: the gate
+compares an export-behaviour number rather than a version, so local rebuilds only trip it when
+that number is deliberately changed.
 
 **Folding duplicate container entries with a first-write-wins rule instead of resolving each path
 through the provider's own lookup.** Considered as a simpler alternative once it was known that a

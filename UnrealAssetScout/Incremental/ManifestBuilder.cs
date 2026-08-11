@@ -1,5 +1,6 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
+using UnrealAssetScout.Utils;
 
 namespace UnrealAssetScout.Incremental;
 
@@ -116,6 +117,7 @@ internal sealed class ManifestBuilder(
             Mode = mode,
             Game = game,
             Tool = [.. tool],
+            UasVersion = AppVersion.DisplayText,
             SkipTypes = [.. skipTypes],
             ScriptBytecode = scriptBytecode,
             Containers = [.. containers],

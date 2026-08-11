@@ -35,7 +35,7 @@ public sealed class ExportPlannerGateTests
     public void Plan_Rebuild_CollapsesToolArrayToTheCurrentPair()
     {
         var manifest = PlanInputsFixture.Manifest("Game/A.uasset");
-        manifest.Tool = [new ToolVersionPair("old", "old"), PlanInputsFixture.Tool];
+        manifest.Tool = [new ToolVersionPair(0, "old"), PlanInputsFixture.Tool];
 
         var result = ExportPlanner.Plan(PlanInputsFixture.Create(
             manifest: manifest,
@@ -108,15 +108,15 @@ public sealed class ExportPlannerGateTests
     public void Plan_UnrecordedToolPair_Errors()
     {
         var manifest = PlanInputsFixture.Manifest("Game/A.uasset");
-        manifest.Tool = [new ToolVersionPair("0.2.1.0+aaa", "1.0.0.0+OLD")];
+        manifest.Tool = [new ToolVersionPair(1, "OLD")];
 
         var result = ExportPlanner.Plan(PlanInputsFixture.Create(
             manifest: manifest,
             sources: PlanInputsFixture.Sources("Game/A.uasset")));
 
         Assert.Null(result.Plan);
-        Assert.Contains("1.0.0.0+OLD", result.Error);
-        Assert.Contains("1.0.0.0+bbb", result.Error);
+        Assert.Contains("OLD", result.Error);
+        Assert.Contains("bbb", result.Error);
         Assert.Contains("--accept-tool-version", result.Error);
     }
 
@@ -124,7 +124,7 @@ public sealed class ExportPlannerGateTests
     public void Plan_UnrecordedToolPairAccepted_ProceedsAndAppendsInvalidatingNothing()
     {
         var manifest = PlanInputsFixture.Manifest("Game/A.uasset");
-        var oldPair = new ToolVersionPair("0.2.1.0+aaa", "1.0.0.0+OLD");
+        var oldPair = new ToolVersionPair(1, "OLD");
         manifest.Tool = [oldPair];
 
         var result = ExportPlanner.Plan(PlanInputsFixture.Create(
@@ -143,7 +143,7 @@ public sealed class ExportPlannerGateTests
     public void Plan_RecordedToolPair_IsSilentAndMovesItToTheEnd()
     {
         var manifest = PlanInputsFixture.Manifest("Game/A.uasset");
-        var otherPair = new ToolVersionPair("0.3.0.0+ccc", "1.0.0.0+ddd");
+        var otherPair = new ToolVersionPair(2, "ddd");
         manifest.Tool = [PlanInputsFixture.Tool, otherPair];
 
         var result = ExportPlanner.Plan(PlanInputsFixture.Create(
@@ -159,7 +159,7 @@ public sealed class ExportPlannerGateTests
     public void Plan_DowngradeToRecordedToolPair_IsSilent()
     {
         var manifest = PlanInputsFixture.Manifest("Game/A.uasset");
-        var newerPair = new ToolVersionPair("0.9.0.0+zzz", "1.0.0.0+zzz");
+        var newerPair = new ToolVersionPair(3, "zzz");
         manifest.Tool = [PlanInputsFixture.Tool, newerPair];
 
         var result = ExportPlanner.Plan(PlanInputsFixture.Create(

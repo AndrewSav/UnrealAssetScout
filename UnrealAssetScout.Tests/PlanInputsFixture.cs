@@ -8,7 +8,7 @@ internal static class PlanInputsFixture
     internal const string Mode = "json";
     internal const string Game = "GAME_UE5_1";
 
-    internal static readonly ToolVersionPair Tool = new("0.2.1.0+aaa", "1.0.0.0+bbb");
+    internal static readonly ToolVersionPair Tool = new(1, "bbb");
 
     internal static PlanInputs Create(
         ExportManifest? manifest = null,
