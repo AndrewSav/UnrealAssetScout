@@ -17,6 +17,7 @@ using UnrealAssetScout.List;
 using UnrealAssetScout.Logging;
 using UnrealAssetScout.Statistics;
 using UnrealAssetScout.TypeFiltering;
+using UnrealAssetScout.Update;
 using UnrealAssetScout.Utils;
 
 namespace UnrealAssetScout;
@@ -34,7 +35,9 @@ public static class Program
         {
             // This is configuring Serilog for the Command Line parsing output, when we do not know the logging options yet
             RuntimeLogging.ConfigureBootstrapLogger();
-            
+
+            SelfUpdate.SweepLeftovers();
+
             var parseArgsResult = ConfigOptionsSupport.ParseArgsWithExitCode(args);
             if (parseArgsResult.Options is null)
                 return parseArgsResult.ExitCode;

@@ -3,8 +3,9 @@
 ## Unreleased
 
 - Switched to IncludeNativeLibrariesForSelfExtract=true for the releases.
-- Reworked app version usage so it is consisten across display, logs and manifests.
+- Reworked app version usage so it is consistent across display, logs and manifests.
 - Every run logs its version as the first line, so a log file identifies the build that wrote it.
+- Added `uas update` command that self-updates to the lastest release.
 
 ## v0.3.0
 

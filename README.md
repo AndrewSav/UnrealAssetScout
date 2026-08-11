@@ -48,6 +48,7 @@ UnrealAssetScout [command] [options]
 
 UnrealAssetScout list [options]
 UnrealAssetScout export <mode> [options]
+UnrealAssetScout update
 ```
 
 ### Common options
@@ -106,6 +107,19 @@ Export runs are incremental whenever `.uas-manifest.json` from a previous run is
 - `-q`, `--accept-tool-version`: `export:` Proceed when the running `uas` or CUE4Parse version is not one recorded in the manifest. Outputs made by the earlier version are carried forward rather than re-exported, so the dump is no longer guaranteed to match a full rebuild; every subsequent run reports that it is a mixture. Without this option a version change stops the run and suggests `--rebuild`.
 
 Mode values are parsed case-insensitively, so `export json` and `export Json` both work.
+
+### `update`
+
+`uas update` replaces the running executable with the latest release published on GitHub. It takes
+no options, and unlike every other command it does not need `--paks` or `--game`.
+
+The download matches the build flavour already installed, so a self-contained install stays
+self-contained and a framework-dependent one stays framework-dependent. Only builds produced by the
+release workflow carry that marking, so a locally built `uas` reports that it cannot update itself
+rather than overwriting your working copy.
+
+The replaced executable is left beside the new one as `uas.exe.old`, because Windows will not delete
+a running program. The next `uas` run of any kind removes it.
 
 ### Response file
 

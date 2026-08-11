@@ -2,6 +2,7 @@
 using System.CommandLine;
 using System.CommandLine.Help;
 using System.CommandLine.Invocation;
+using System.CommandLine.Parsing;
 using System.IO;
 using System.Linq;
 using System.Text.RegularExpressions;
@@ -9,6 +10,7 @@ using CUE4Parse.UE4.Versions;
 using UnrealAssetScout.Export;
 using UnrealAssetScout.Logging;
 using UnrealAssetScout.TypeFiltering;
+using UnrealAssetScout.Update;
 using Superpower;
 
 namespace UnrealAssetScout.Config;
@@ -64,8 +66,10 @@ internal static class ConfigOptionsSupport
             exportOptions.DryRun,
             exportOptions.AcceptToolVersion
         };
+        var updateCommand = new Command("update", "Replace this executable with the latest published release.");
         root.Subcommands.Add(listCommand);
         root.Subcommands.Add(exportCommand);
+        root.Subcommands.Add(updateCommand);
         ConfigureHelpOption(root);
         ConfigureVersionOption(root);
         var helpAction = root.Options.OfType<HelpOption>().Single().Action;
@@ -82,6 +86,9 @@ internal static class ConfigOptionsSupport
             });
             return new ParseArgsResult(null, 0);
         }
+
+        if (ReferenceEquals(parseResult.CommandResult.Command, updateCommand))
+            return RunUpdateCommand(parseResult, rootOptions);
 
         if (parseResult.Errors.Count > 0)
         {
@@ -274,6 +281,24 @@ internal static class ConfigOptionsSupport
     private static void ConfigureVersionOption(RootCommand root)
     {
         root.Options.OfType<VersionOption>().Single().Action = new BuildVersionAction();
+    }
+
+    private static ParseArgsResult RunUpdateCommand(ParseResult parseResult, RootOptions rootOptions)
+    {
+        // --paks and --game are recursive, so unspecified they would be reported as errors otherwise
+        var unrelatedErrors = parseResult.Errors
+            .Where(error => error.SymbolResult is not OptionResult optionResult
+                            || (optionResult.Option != rootOptions.Paks && optionResult.Option != rootOptions.Game))
+            .ToList();
+
+        if (unrelatedErrors.Count > 0)
+        {
+            foreach (var error in unrelatedErrors)
+                Console.Error.WriteLine(error.Message);
+            return new ParseArgsResult(null, 1);
+        }
+
+        return new ParseArgsResult(null, UpdateCommand.Run());
     }
 
     private sealed record RootOptions(
