@@ -936,16 +936,16 @@ public class ConfigOptionsTests
     [Fact]
     public void ParseArgs_Help_PrintsStockHelpAndDocumentationLink()
     {
-        var originalError = Console.Error;
-        using var errorWriter = new StringWriter();
+        var originalOutput = Console.Out;
+        using var outputWriter = new StringWriter();
 
         try
         {
-            Console.SetError(errorWriter);
+            Console.SetOut(outputWriter);
             var options = ConfigOptionsSupport.ParseArgs(["--help"]);
 
             Assert.Null(options);
-            var output = errorWriter.ToString();
+            var output = outputWriter.ToString();
             Assert.Contains("Extract or list Unreal Engine pak/utoc assets.", output);
             Assert.Contains("Usage:", output);
             Assert.Contains("Commands:", output);
@@ -962,7 +962,7 @@ public class ConfigOptionsTests
         }
         finally
         {
-            Console.SetError(originalError);
+            Console.SetOut(originalOutput);
         }
     }
 
@@ -1017,22 +1017,22 @@ public class ConfigOptionsTests
     [Fact]
     public void ParseArgs_ListHelp_ShowsShortGamePlaceholderInsteadOfEnumDump()
     {
-        var originalError = Console.Error;
-        using var errorWriter = new StringWriter();
+        var originalOutput = Console.Out;
+        using var outputWriter = new StringWriter();
 
         try
         {
-            Console.SetError(errorWriter);
+            Console.SetOut(outputWriter);
             var options = ConfigOptionsSupport.ParseArgs(["list", "--help"]);
 
             Assert.Null(options);
-            var output = errorWriter.ToString();
+            var output = outputWriter.ToString();
             Assert.Contains("--game <game>", output);
             Assert.DoesNotContain("GAME_UE5_3|GAME_UE5_4", output);
         }
         finally
         {
-            Console.SetError(originalError);
+            Console.SetOut(originalOutput);
         }
     }
 

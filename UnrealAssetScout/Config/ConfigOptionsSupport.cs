@@ -81,7 +81,7 @@ internal static class ConfigOptionsSupport
         {
             parseResult.Invoke(new InvocationConfiguration
             {
-                Output = Console.Error,
+                Output = Console.Out,
                 Error = Console.Error
             });
             return new ParseArgsResult(null, 0);

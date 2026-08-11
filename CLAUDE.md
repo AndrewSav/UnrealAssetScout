@@ -28,6 +28,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - Save source and project files as UTF-8 with a BOM: `.cs`, `.csproj`, `.slnx`, `.sln`, `.ps1`, `.DotSettings`. These can legitimately contain non-ASCII characters, and the BOM stops tooling from having to guess the encoding.
 - Save documentation, plain-text, and config files without a BOM: `.md`, `.txt`, `.yml`, `.json`, `.gitignore`.
 - Keep those non-BOM files ASCII-only. Do not use em dashes, en dashes, curly quotes, ellipsis characters, or any other non-ASCII punctuation; use plain ASCII equivalents instead.
+- `install/install.ps1` is the one `.ps1` saved without a BOM, because it is served over HTTP and piped into `iex`, where a leading `U+FEFF` makes the first statement fail to parse. Having no BOM, it is bound by the ASCII-only rule above: the BOM exists so an editor cannot garble non-ASCII characters, so a file that cannot carry one must not contain any.
 
 ## CUE4Parse boundaries
 
