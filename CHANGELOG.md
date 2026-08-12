@@ -2,7 +2,7 @@
 
 ## Unreleased
 
-- None
+- Normliase git commit hash in version to always be the same length
 
 ## v0.4.0
 

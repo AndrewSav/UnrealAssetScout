@@ -33,13 +33,17 @@
         <PackageReference Include="Serilog.Sinks.File" Version="7.0.0" />
     </ItemGroup>
 
+    <!-- The abbreviation length is fixed rather than left to git, which sizes it from how many
+         objects the clone happens to hold. A shallow CI checkout and a full local clone otherwise
+         abbreviate the same commit to different lengths, and the manifest tool gate compares these
+         strings verbatim. -->
     <Target Name="StampGitRevisions" BeforeTargets="GetAssemblyAttributes">
-        <Exec Command="git -C &quot;$(MSBuildProjectDirectory)\..&quot; rev-parse --short HEAD"
+        <Exec Command="git -C &quot;$(MSBuildProjectDirectory)\..&quot; rev-parse --short=12 HEAD"
               ConsoleToMSBuild="true" ContinueOnError="true" StandardOutputImportance="low">
             <Output TaskParameter="ConsoleOutput" PropertyName="UasGitSha" />
             <Output TaskParameter="ExitCode" PropertyName="UasGitExitCode" />
         </Exec>
-        <Exec Command="git -C &quot;$(MSBuildProjectDirectory)\..\CUE4Parse&quot; rev-parse --short HEAD"
+        <Exec Command="git -C &quot;$(MSBuildProjectDirectory)\..\CUE4Parse&quot; rev-parse --short=12 HEAD"
               Condition="Exists('$(MSBuildProjectDirectory)\..\CUE4Parse\.git')"
               ConsoleToMSBuild="true" ContinueOnError="true" StandardOutputImportance="low">
             <Output TaskParameter="ConsoleOutput" PropertyName="Cue4ParseGitSha" />
