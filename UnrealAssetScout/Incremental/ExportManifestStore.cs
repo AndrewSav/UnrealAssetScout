@@ -1,5 +1,6 @@
 ﻿using System;
 using System.IO;
+using System.Text.Encodings.Web;
 using System.Text.Json;
 
 namespace UnrealAssetScout.Incremental;
@@ -27,6 +28,7 @@ internal static class ExportManifestStore
     private static readonly JsonSerializerOptions SerializerOptions = new()
     {
         WriteIndented = true,
+        Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping, // Cosmetic: keeps punctuation out of \uXXXX form.
         Converters = { new ManifestSourceConverter() }
     };
 

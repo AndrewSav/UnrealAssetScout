@@ -1,4 +1,4 @@
-namespace UnrealAssetScout.Incremental;
+﻿namespace UnrealAssetScout.Incremental;
 
 // Which rule first marked a source stale, for the plan summary a run prints.
 // Produced by ExportPlanner's direct staleness check and counted into PlanStatistics.

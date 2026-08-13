@@ -105,6 +105,20 @@ public sealed class ExportManifestStoreTests
     }
 
     [Fact]
+    public void Save_WritesPunctuationLiterallyRatherThanAsEscapes()
+    {
+        // The default encoder escapes everything outside a small allow-list, which reaches the file
+        // as \uXXXX and makes recorded values unreadable.
+        using var dir = new TempDir();
+        ExportManifestStore.Save(dir.Path, new ExportManifest { UasVersion = "0.4.0+abcdef123456" });
+
+        var json = File.ReadAllText(ExportManifestStore.PathFor(dir.Path));
+
+        Assert.Contains("0.4.0+abcdef123456", json);
+        Assert.DoesNotContain("\\u002B", json);
+    }
+
+    [Fact]
     public void Save_UsesShortJsonKeys()
     {
         using var dir = new TempDir();

@@ -3,6 +3,7 @@
 ## Unreleased
 
 - Normliase git commit hash in version to always be the same length
+- Relaxed json string encoding in the manifest so that "0.0.0+5a3..." does not looke "0.0.0\u002B5a3..."
 
 ## v0.4.0
 

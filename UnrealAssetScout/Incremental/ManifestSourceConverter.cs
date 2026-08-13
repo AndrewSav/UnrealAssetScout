@@ -1,4 +1,5 @@
-using System;
+﻿using System;
+using System.Text.Encodings.Web;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 
@@ -14,7 +15,11 @@ internal sealed class ManifestSourceConverter : JsonConverter<ManifestSource>
 {
     // Deliberately a separate options instance with this converter absent: reusing the caller's
     // would recurse, and it is also what turns the indentation off for the entry itself.
-    private static readonly JsonSerializerOptions EntryOptions = new() { WriteIndented = false };
+    private static readonly JsonSerializerOptions EntryOptions = new()
+    {
+        WriteIndented = false,
+        Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping // Cosmetic: matches ExportManifestStore.
+    };
 
     public override ManifestSource? Read(
         ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options) =>
