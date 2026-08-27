@@ -4,6 +4,8 @@
 
 - Normliase git commit hash in version to always be the same length
 - Relaxed json string encoding in the manifest so that "0.0.0+5a3..." does not looke "0.0.0\u002B5a3..."
+- Updated CUE4Parse to the latest commit. This is a breaking change. Output may be different on the same input.
+- Incremental runs now track textures written by models and animations exports, not just the meshes and materials.
 
 ## v0.4.0
 

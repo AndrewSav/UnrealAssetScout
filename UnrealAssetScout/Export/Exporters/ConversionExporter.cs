@@ -1,6 +1,7 @@
 ﻿using System;
-using System.IO;
+using System.Linq;
 using CUE4Parse_Conversion;
+using CUE4Parse_Conversion.Options;
 using CUE4Parse.UE4.Assets.Exports;
 using CUE4Parse.UE4.Assets.Exports.Actor;
 using CUE4Parse.UE4.Assets.Exports.Animation;
@@ -16,6 +17,10 @@ namespace UnrealAssetScout.Export.Exporters;
 // when a package export matches one of the supported conversion asset types.
 internal static class ConversionExporter
 {
+    // Deliberately CUE4Parse_Conversion's own defaults rather than a pinned set, so exports
+    // follow the formats it considers current.
+    private static readonly ExportOptions ConversionOptions = new();
+
     internal static ExportAttemptResult TryExportModel(UObject export, PackageExportContext packageContext, string outputDir)
     {
         if (export is not (UMaterialInterface or USkeletalMesh or USkeleton or UStaticMesh or ALandscapeProxy))
@@ -34,18 +39,28 @@ internal static class ConversionExporter
 
     private static ExportAttemptResult TryExport(UObject export, PackageExportContext packageContext, string outputDir)
     {
+        var logPath = $"{packageContext.Path}/{export.Name}";
 
         try
         {
-            var converterExporter = new Exporter(export, new ExporterOptions());
-            if (!converterExporter.TryWriteToDir(new DirectoryInfo(outputDir), out _, out var savedFilePath))
-                return ExportAttemptResult.NotHandled();
+            var session = new ExportSession();
+            session.Add(export);
+            var results = session.RunAsync(outputDir, ConversionOptions).GetAwaiter().GetResult();
 
-            return ExportAttemptResult.Success($"{packageContext.Path}/{export.Name}", savedFilePath);
+            var failed = results.FirstOrDefault(result => !result.Success);
+            if (failed is not null)
+                return ExportAttemptResult.Failure(logPath, failed.Error?.Message ?? "conversion failed");
+
+            var exportedArtifacts = results
+                .SelectMany(result => result.DiskFilePaths ?? [])
+                .Select(diskFilePath => new ExportedArtifact(logPath, diskFilePath))
+                .ToArray();
+
+            return ExportAttemptResult.Success(exportedArtifacts);
         }
         catch (Exception e)
         {
-            return ExportAttemptResult.Failure($"{packageContext.Path}/{export.Name}", e.Message);
+            return ExportAttemptResult.Failure(logPath, e.Message);
         }
     }
 }
