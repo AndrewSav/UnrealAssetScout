@@ -10,6 +10,7 @@ using CUE4Parse.UE4.Versions;
 using UnrealAssetScout.Export;
 using UnrealAssetScout.Logging;
 using UnrealAssetScout.TypeFiltering;
+using UnrealAssetScout.Licensing;
 using UnrealAssetScout.Update;
 using Superpower;
 
@@ -67,9 +68,11 @@ internal static class ConfigOptionsSupport
             exportOptions.AcceptToolVersion
         };
         var updateCommand = new Command("update", "Replace this executable with the latest published release.");
+        var licensesCommand = new Command("licenses", "Print the uas license and the notices for everything bundled into it.");
         root.Subcommands.Add(listCommand);
         root.Subcommands.Add(exportCommand);
         root.Subcommands.Add(updateCommand);
+        root.Subcommands.Add(licensesCommand);
         ConfigureHelpOption(root);
         ConfigureVersionOption(root);
         var helpAction = root.Options.OfType<HelpOption>().Single().Action;
@@ -88,7 +91,10 @@ internal static class ConfigOptionsSupport
         }
 
         if (ReferenceEquals(parseResult.CommandResult.Command, updateCommand))
-            return RunUpdateCommand(parseResult, rootOptions);
+            return RunContainerlessCommand(parseResult, rootOptions, UpdateCommand.Run);
+
+        if (ReferenceEquals(parseResult.CommandResult.Command, licensesCommand))
+            return RunContainerlessCommand(parseResult, rootOptions, LicensesCommand.Run);
 
         if (parseResult.Errors.Count > 0)
         {
@@ -283,7 +289,7 @@ internal static class ConfigOptionsSupport
         root.Options.OfType<VersionOption>().Single().Action = new BuildVersionAction();
     }
 
-    private static ParseArgsResult RunUpdateCommand(ParseResult parseResult, RootOptions rootOptions)
+    private static ParseArgsResult RunContainerlessCommand(ParseResult parseResult, RootOptions rootOptions, Func<int> run)
     {
         // --paks and --game are recursive, so unspecified they would be reported as errors otherwise
         var unrelatedErrors = parseResult.Errors
@@ -298,7 +304,7 @@ internal static class ConfigOptionsSupport
             return new ParseArgsResult(null, 1);
         }
 
-        return new ParseArgsResult(null, UpdateCommand.Run());
+        return new ParseArgsResult(null, run());
     }
 
     private sealed record RootOptions(

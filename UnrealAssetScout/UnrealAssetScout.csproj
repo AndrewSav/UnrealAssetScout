@@ -18,6 +18,14 @@
         <AssemblyMetadata Include="BuildFlavor" Value="$(BuildFlavor)" />
     </ItemGroup>
 
+    <!-- A release is a single executable and the installer copies only that file, so notices
+         shipped beside it would not reach most users. Embedding them lets `uas licenses` print
+         them from whatever copy of the binary someone actually has. -->
+    <ItemGroup>
+        <EmbeddedResource Include="..\LICENSE" LogicalName="UnrealAssetScout.LICENSE" />
+        <EmbeddedResource Include="..\THIRD-PARTY-NOTICES" LogicalName="UnrealAssetScout.THIRD-PARTY-NOTICES" />
+    </ItemGroup>
+
     <ItemGroup>
         <ProjectReference Include="..\CUE4Parse\CUE4Parse\CUE4Parse.csproj" />
         <ProjectReference Include="..\CUE4Parse\CUE4Parse-Conversion\CUE4Parse-Conversion.csproj" />
