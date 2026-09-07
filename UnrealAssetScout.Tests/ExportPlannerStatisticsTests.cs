@@ -27,23 +27,6 @@ public sealed class ExportPlannerStatisticsTests
         // Only the updated source's recorded time, never the unchanged one's and never the
         // addition, which has never been exported and so has no time at all.
         Assert.Equal(100, statistics.UpdateCostMilliseconds);
-        Assert.Equal(0, statistics.UpdatesWithoutRecordedCost);
-    }
-
-    [Fact]
-    public void Plan_CountsUpdatesThatHaveNoRecordedTimeRatherThanTreatingThemAsFree()
-    {
-        var manifest = PlanInputsFixture.Manifest("Game/A.uasset");
-        var fingerprints = PlanInputsFixture.Fingerprints("Game/A.uasset");
-        fingerprints["Game/A.uasset"] = "patched";
-
-        var result = ExportPlanner.Plan(PlanInputsFixture.Create(
-            manifest: manifest,
-            sources: PlanInputsFixture.Sources("Game/A.uasset"),
-            fingerprints: fingerprints));
-
-        Assert.Equal(0, result.Plan!.Statistics.UpdateCostMilliseconds);
-        Assert.Equal(1, result.Plan.Statistics.UpdatesWithoutRecordedCost);
     }
 
     [Fact]
@@ -92,7 +75,7 @@ public sealed class ExportPlannerStatisticsTests
     [Fact]
     public void DescribeReasons_NamesOnlyTheRulesThatFired()
     {
-        var statistics = new PlanStatistics(0, 3, 0, 0, 0, new Dictionary<StaleReason, int>
+        var statistics = new PlanStatistics(0, 3, 0, 0, new Dictionary<StaleReason, int>
         {
             [StaleReason.OutputMissing] = 0,
             [StaleReason.Propagated] = 2,

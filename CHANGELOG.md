@@ -7,6 +7,7 @@
 - Updated CUE4Parse to the latest commit. This is a breaking change. Output may be different on the same input.
 - Incremental runs now track textures written by models and animations exports, not just the meshes and materials.
 - Added `uas licenses`, printing the license and the notices for everything bundled into the executable.
+- Reworded the plan cost line an incremental run prints and removed uncrecorded time handling, since it's always recorded.
 
 ## v0.4.0
 

@@ -5,19 +5,18 @@ namespace UnrealAssetScout.Incremental;
 
 // What a plan decided, counted for the summary lines a run prints.
 // Produced by ExportPlanner alongside the plan itself and rendered by IncrementalRunner.
-// UpdateCost is summed from the times the previous run recorded, so it answers "how long did this
-// work take last time" rather than predicting the current run; sources the previous manifest has
-// no time for are counted separately rather than silently lowering the total.
+// UpdateCost sums the time each source cost when it was last exported, which is not necessarily
+// the same run for all of them, so it answers "how long did this work take last time" rather than
+// predicting the current run.
 internal sealed record PlanStatistics(
     int Added,
     int Updated,
     int Unchanged,
     double UpdateCostMilliseconds,
-    int UpdatesWithoutRecordedCost,
     IReadOnlyDictionary<StaleReason, int> Reasons)
 {
     internal static PlanStatistics ForFullRun(int sourceCount) =>
-        new(sourceCount, 0, 0, 0, 0, new Dictionary<StaleReason, int>());
+        new(sourceCount, 0, 0, 0, new Dictionary<StaleReason, int>());
 
     // Non-zero reasons only, in rule evaluation order, so the line names what actually fired.
     internal string DescribeReasons() =>

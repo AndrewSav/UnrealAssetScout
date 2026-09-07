@@ -216,14 +216,11 @@ internal static class IncrementalRunner
         if (statistics.Updated == 0)
             return;
 
-        // The cost is what the previous run measured for exactly these sources, so it is a record
+        // The cost is what earlier runs measured for exactly these sources, so it is a record
         // rather than a forecast; additions have never been exported and so have none.
-        var unknown = statistics.UpdatesWithoutRecordedCost > 0
-            ? $", {statistics.UpdatesWithoutRecordedCost:N0} of them without a recorded time"
-            : string.Empty;
         RuntimeLogging.LogSummary(
-            "Plan: the previous run spent {Cost} on the sources being updated{Unknown}",
-            Formatting.FormatElapsed(TimeSpan.FromMilliseconds(statistics.UpdateCostMilliseconds)), unknown);
+            "Plan: recorded export times for the sources being updated total {Cost}",
+            Formatting.FormatElapsed(TimeSpan.FromMilliseconds(statistics.UpdateCostMilliseconds)));
     }
 
     // Internal, not private, so it can be driven directly by plain SourceRecord fixtures with no

@@ -106,9 +106,9 @@ internal static class ExportPlanner
         return stale;
     }
 
-    // A source the previous manifest never had is an addition; everything else in the work list
-    // is an update whose previous cost is known, except where that manifest predates cost
-    // recording, which is counted rather than folded into the total as a zero.
+    // A source the previous manifest never had is an addition; everything else in the work list is
+    // an update whose previous cost is known, because every manifest entry carries the time its
+    // last real export took, carried forward untouched for as long as the source stays unchanged.
     private static PlanStatistics Summarise(
         IReadOnlyList<string> workList, IReadOnlyList<string> carryForward, ManifestIndex index,
         IReadOnlyDictionary<StaleReason, int> reasons)
@@ -116,7 +116,6 @@ internal static class ExportPlanner
         var added = 0;
         var updated = 0;
         var updateCost = 0d;
-        var withoutCost = 0;
 
         foreach (var path in workList)
         {
@@ -127,13 +126,10 @@ internal static class ExportPlanner
             }
 
             updated++;
-            if (entry.Ms > 0)
-                updateCost += entry.Ms;
-            else
-                withoutCost++;
+            updateCost += entry.Ms;
         }
 
-        return new PlanStatistics(added, updated, carryForward.Count, updateCost, withoutCost, reasons);
+        return new PlanStatistics(added, updated, carryForward.Count, updateCost, reasons);
     }
 
     // Returns the first rule that fires, so the plan summary can name why a source is stale.
