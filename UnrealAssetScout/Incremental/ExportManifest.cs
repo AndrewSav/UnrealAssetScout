@@ -16,6 +16,7 @@ internal sealed class ExportManifest
     [JsonPropertyName("uasVersion")] public string UasVersion { get; set; } = string.Empty;
     [JsonPropertyName("skipTypes")] public List<string> SkipTypes { get; set; } = [];
     [JsonPropertyName("scriptBytecode")] public bool ScriptBytecode { get; set; }
+    [JsonPropertyName("audioDisambiguation")] public bool AudioDisambiguation { get; set; }
     [JsonPropertyName("containers")] public List<string> Containers { get; set; } = [];
     [JsonPropertyName("usmap")] public ManifestUsmapBlock Usmap { get; set; } = new();
     [JsonPropertyName("paths")] public List<string> Paths { get; set; } = [];

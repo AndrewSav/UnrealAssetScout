@@ -14,6 +14,7 @@ internal sealed record PlanInputs(
     IReadOnlyList<string> Containers,
     IReadOnlyList<string> SkipTypes,
     bool ScriptBytecode,
+    bool AudioDisambiguation,
     IReadOnlyDictionary<string, SourceCandidate> Sources,
     IReadOnlyDictionary<string, string> Fingerprints,
     UsmapSnapshot Usmap,

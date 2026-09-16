@@ -16,6 +16,7 @@ internal sealed class ManifestBuilder(
     IReadOnlyList<ToolVersionPair> tool,
     IReadOnlyList<string> skipTypes,
     bool scriptBytecode,
+    bool audioDisambiguation,
     IReadOnlyList<string> containers)
 {
     private readonly StringTable _paths = new();
@@ -120,6 +121,7 @@ internal sealed class ManifestBuilder(
             UasVersion = AppVersion.DisplayText,
             SkipTypes = [.. skipTypes],
             ScriptBytecode = scriptBytecode,
+            AudioDisambiguation = audioDisambiguation,
             Containers = [.. containers],
             Usmap = _usmap,
             Paths = _paths.ToList(),

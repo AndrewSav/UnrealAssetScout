@@ -18,6 +18,55 @@ public sealed class ExportPlannerGateTests
     }
 
     [Fact]
+    public void Plan_AudioDisambiguationDiffersFromTheManifest_Fails()
+    {
+        // Flipping it renames every Wwise media file, so there is no useful subset to re-export and
+        // an incremental run would otherwise leave the whole dump under the previous naming.
+        var manifest = PlanInputsFixture.Manifest("Game/A.uasset");
+        manifest.AudioDisambiguation = true;
+
+        var result = ExportPlanner.Plan(PlanInputsFixture.Create(
+            manifest: manifest,
+            sources: PlanInputsFixture.Sources("Game/A.uasset"),
+            fingerprints: PlanInputsFixture.Fingerprints("Game/A.uasset"),
+            audioDisambiguation: false));
+
+        Assert.Null(result.Plan);
+        Assert.Contains("--rebuild", result.Error);
+    }
+
+    [Fact]
+    public void Plan_AudioDisambiguationMatchingTheManifest_Proceeds()
+    {
+        var manifest = PlanInputsFixture.Manifest("Game/A.uasset");
+        manifest.AudioDisambiguation = true;
+
+        var result = ExportPlanner.Plan(PlanInputsFixture.Create(
+            manifest: manifest,
+            sources: PlanInputsFixture.Sources("Game/A.uasset"),
+            fingerprints: PlanInputsFixture.Fingerprints("Game/A.uasset"),
+            audioDisambiguation: true));
+
+        Assert.Null(result.Error);
+    }
+
+    [Fact]
+    public void Plan_RebuildWithAudioDisambiguationDiffering_Proceeds()
+    {
+        var manifest = PlanInputsFixture.Manifest("Game/A.uasset");
+        manifest.AudioDisambiguation = true;
+
+        var result = ExportPlanner.Plan(PlanInputsFixture.Create(
+            manifest: manifest,
+            sources: PlanInputsFixture.Sources("Game/A.uasset"),
+            fingerprints: PlanInputsFixture.Fingerprints("Game/A.uasset"),
+            audioDisambiguation: false,
+            rebuild: true));
+
+        Assert.Null(result.Error);
+    }
+
+    [Fact]
     public void Plan_Rebuild_IgnoresManifestAndRunsFull()
     {
         var result = ExportPlanner.Plan(PlanInputsFixture.Create(

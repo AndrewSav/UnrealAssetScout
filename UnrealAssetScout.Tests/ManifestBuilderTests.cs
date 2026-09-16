@@ -8,6 +8,7 @@ public sealed class ManifestBuilderTests
         mode: "json",
         game: "GAME_UE5_1",
         tool: [new ToolVersionPair(1, "b")],
+        audioDisambiguation: false,
         skipTypes: [],
         scriptBytecode: false,
         containers: ["a.pak"]);

@@ -57,6 +57,57 @@ public sealed class ExportPathUtilsTests
     }
 
     [Fact]
+    public void ApplyOriginSuffix_AnOriginWithAContainer_AppendsTheContainersOwnName()
+    {
+        var name = ExportPathUtils.ApplyOriginSuffix(
+            "AKE_Footsteps_Creak_1 (SFX)",
+            new ArtifactOrigin("Game/WwiseAudio/Media/350661223.wem", "AKE_Footsteps_Creak_1 (SFX)"));
+
+        Assert.Equal("AKE_Footsteps_Creak_1 (SFX) [350661223]", name);
+    }
+
+    [Fact]
+    public void ApplyOriginSuffix_TwoContainersSharingAName_ProduceDifferentNames()
+    {
+        // The defect this exists to remove: two media whose Wwise debug name matches land on one
+        // file, because the name CUE4Parse builds carries the language rather than the media.
+        var first = ExportPathUtils.ApplyOriginSuffix(
+            "Creak_1 (SFX)", new ArtifactOrigin("Game/WwiseAudio/Media/350661223.wem", "Creak_1 (SFX)"));
+        var second = ExportPathUtils.ApplyOriginSuffix(
+            "Creak_1 (SFX)", new ArtifactOrigin("Game/WwiseAudio/Media/884337675.wem", "Creak_1 (SFX)"));
+
+        Assert.NotEqual(first, second);
+    }
+
+    [Fact]
+    public void ApplyOriginSuffix_OneContainerReachedTwice_KeepsBothOnOneName()
+    {
+        var first = ExportPathUtils.ApplyOriginSuffix(
+            "Wind (SFX)", new ArtifactOrigin("Game/WwiseAudio/Media/26426.wem", "Wind (SFX)"));
+        var second = ExportPathUtils.ApplyOriginSuffix(
+            "Wind (SFX)", new ArtifactOrigin("Game/WwiseAudio/Media/26426.wem", "Wind (SFX)"));
+
+        Assert.Equal(first, second);
+    }
+
+    [Fact]
+    public void ApplyOriginSuffix_NoOrigin_LeavesTheNameAlone()
+    {
+        var name = ExportPathUtils.ApplyOriginSuffix("Wind (SFX)", null);
+
+        Assert.Equal("Wind (SFX)", name);
+    }
+
+    [Fact]
+    public void ApplyOriginSuffix_ANameThatIsItselfAPath_SuffixesOnlyTheLastSegment()
+    {
+        var name = ExportPathUtils.ApplyOriginSuffix(
+            "Music/Intro", new ArtifactOrigin("Game/WwiseAudio/Media/26426.wem", "Music/Intro"));
+
+        Assert.Equal("Music/Intro [26426]", name);
+    }
+
+    [Fact]
     public void ComposeExportPath_LeafWithCharactersIllegalInAFileName_IsSanitised()
     {
         var path = ExportPathUtils.ComposeExportPath("Game/Folder/Foo.uasset", "Bar:Baz", nestUnderPackage: true);

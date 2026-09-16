@@ -12,6 +12,8 @@ namespace UnrealAssetScout.Incremental;
 // mode that matters: a wrongly skipped package leaving a stale file nobody notices.
 internal static class ExportPlanner
 {
+    private static string Describe(bool enabled) => enabled ? "enabled" : "disabled";
+
     internal static PlanResult Plan(PlanInputs inputs)
     {
         var all = inputs.Sources.Keys.Order().ToList();
@@ -31,6 +33,14 @@ internal static class ExportPlanner
             return PlanResult.Failed(
                 $"manifest was written for game '{manifest.Game}', this run is '{inputs.Game}'; " +
                 "pass --rebuild to replace it");
+
+        // Flipping this renames every Wwise media file, so unlike the bytecode flag there is no
+        // subset worth re-exporting: an incremental run would rewrite the whole dump anyway, and
+        // one that decided nothing was stale would leave every file under the previous naming.
+        if (manifest.AudioDisambiguation != inputs.AudioDisambiguation)
+            return PlanResult.Failed(
+                $"manifest was written with audio disambiguation {Describe(manifest.AudioDisambiguation)}, " +
+                $"this run has it {Describe(inputs.AudioDisambiguation)}; pass --rebuild to replace it");
 
         var mounted = new HashSet<string>(inputs.Containers, System.StringComparer.OrdinalIgnoreCase);
         var missing = manifest.Containers.FirstOrDefault(container => !mounted.Contains(container));

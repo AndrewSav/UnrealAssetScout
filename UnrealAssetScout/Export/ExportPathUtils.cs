@@ -18,6 +18,20 @@ internal static class ExportPathUtils
     // Walks the resolved outer chain rather than the loaded objects, because ResolvedObject exposes
     // the names without forcing every outer to deserialize. The outermost entry is the package
     // itself, which the output path already carries, so it stops one short of it.
+    // Names the container the bytes were read from, so two media that CUE4Parse names alike do not
+    // land on one file: its Wwise naming appends the language, which is the same for every
+    // non-localised sound, rather than anything that tells one medium from another. Applied to every
+    // media file rather than only where a name repeats, because which names repeat depends on what
+    // else the run exported, and a file's name must not.
+    internal static string ApplyOriginSuffix(string name, ArtifactOrigin? origin)
+    {
+        if (origin is not { } presentOrigin)
+            return name;
+
+        var container = Path.GetFileNameWithoutExtension(presentOrigin.Container);
+        return string.IsNullOrEmpty(container) ? name : $"{name} [{container}]";
+    }
+
     internal static string ComposeExportLeaf(UObject export)
     {
         var outerNames = new List<string>();

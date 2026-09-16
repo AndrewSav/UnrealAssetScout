@@ -34,6 +34,10 @@ internal static class IncrementalRunner
         var isJsonMode = mode == ExportMode.Json;
         var effectiveScriptBytecode = isJsonMode && options.ScriptBytecode;
 
+        // Neutralised outside audio mode the same way script bytecode is outside json, so a flag
+        // left in a shared response file cannot make another mode's dump refuse to continue.
+        var effectiveAudioDisambiguation = mode == ExportMode.Audio && !options.NoAudioDisambiguation;
+
         var planWatch = Stopwatch.StartNew();
         var stepWatch = Stopwatch.StartNew();
         var previous = ExportManifestStore.TryLoad(outputDir, out var loadError);
@@ -67,6 +71,7 @@ internal static class IncrementalRunner
             Containers: containers,
             SkipTypes: options.JsonSkipTypeNames,
             ScriptBytecode: effectiveScriptBytecode,
+            AudioDisambiguation: effectiveAudioDisambiguation,
             Sources: sources,
             Fingerprints: fingerprints.ByPath,
             Usmap: usmap,
@@ -112,7 +117,7 @@ internal static class IncrementalRunner
 
         var builder = new ManifestBuilder(
             mode.ToString().ToLowerInvariant(), options.Game.Value.ToString(), plan.ToolVersions,
-            options.JsonSkipTypeNames, effectiveScriptBytecode, containers);
+            options.JsonSkipTypeNames, effectiveScriptBytecode, effectiveAudioDisambiguation, containers);
 
         var recorder = new SourceRecorder(outputDir, usmap, effectiveScriptBytecode, isJsonMode);
         var stats = ExportProcessor.ProcessFiles(
@@ -120,7 +125,8 @@ internal static class IncrementalRunner
             compactCounterSink, typeFilteredPaths, options.LogCounter, options.JsonSkipTypeNames,
             incrementalWorkList: plan.Baseline is null ? null : new HashSet<string>(plan.WorkList),
             recorder: recorder,
-            constituentsOf: path => sources.TryGetValue(path, out var candidate) ? candidate.Constituents : null);
+            constituentsOf: path => sources.TryGetValue(path, out var candidate) ? candidate.Constituents : null,
+            audioDisambiguation: effectiveAudioDisambiguation);
 
         // ExportProcessor iterates provider.Files.Values, which yields a shadowed path once per
         // mounting container, so a source can be opened and closed twice for the same path. Keep

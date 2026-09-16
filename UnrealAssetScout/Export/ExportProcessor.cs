@@ -34,7 +34,8 @@ public static class ExportProcessor
         IReadOnlyCollection<string> jsonSkipTypeNames,
         IReadOnlySet<string>? incrementalWorkList = null,
         SourceRecorder? recorder = null,
-        Func<string, IReadOnlyList<string>?>? constituentsOf = null)
+        Func<string, IReadOnlyList<string>?>? constituentsOf = null,
+        bool audioDisambiguation = false)
     {
         var mountedPath = provider.MountedVfs.FirstOrDefault()?.Path;
         var gameDirectory = string.IsNullOrWhiteSpace(mountedPath)
@@ -149,7 +150,7 @@ public static class ExportProcessor
                     runStatsAccumulator.ModeStats.SetSummaryLabel("Audio export(s)");
                     runStatsAccumulator.RecordRequirement(ProcessPackageMode(
                         item, markUsmap,
-                        new AudioPackageProcessor(item, outputDir, verbose, runStatsAccumulator.ModeStats, recorder),
+                        new AudioPackageProcessor(item, outputDir, verbose, runStatsAccumulator.ModeStats, recorder, audioDisambiguation),
                         recorder, constituentsOf?.Invoke(path)));
                     break;
 

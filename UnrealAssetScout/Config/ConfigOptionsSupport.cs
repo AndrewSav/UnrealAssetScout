@@ -60,6 +60,7 @@ internal static class ConfigOptionsSupport
             exportOptions.JsonSkipTypesFile,
             exportOptions.NoSkipTypes,
             exportOptions.ScriptBytecode,
+            exportOptions.NoAudioDisambiguation,
             exportOptions.Output,
             exportOptions.Verbose,
             exportOptions.CompactProgress,
@@ -122,6 +123,7 @@ internal static class ConfigOptionsSupport
             MarkUsmap = parseResult.GetValue(rootOptions.MarkUsmap),
             CompactProgress = isExportCommand && parseResult.GetValue(exportOptions.CompactProgress),
             ScriptBytecode = isExportCommand && parseResult.GetValue(exportOptions.ScriptBytecode),
+            NoAudioDisambiguation = isExportCommand && parseResult.GetValue(exportOptions.NoAudioDisambiguation),
             Rebuild = isExportCommand && parseResult.GetValue(exportOptions.Rebuild),
             DryRun = isExportCommand && parseResult.GetValue(exportOptions.DryRun),
             AcceptToolVersion = isExportCommand && parseResult.GetValue(exportOptions.AcceptToolVersion),
@@ -258,6 +260,7 @@ internal static class ConfigOptionsSupport
         skipTypesFile.HelpName = "filename";
         var noSkipTypes = ConfigOptionFactory.CreateBoolOption("--no-skip-types", "-k", "export json: Disable the built-in skip list entirely");
         var scriptBytecode = ConfigOptionFactory.CreateBoolOption("--script-bytecode", "-b", "export json: Serialize script bytecode into JSON output. Ignored for other export modes.");
+        var noAudioDisambiguation = ConfigOptionFactory.CreateBoolOption("--no-audio-disambiguation", "-d", "export audio: Audio exports suffix each Wwise media file with the id of the container it was read from, so media that share a name do not overwrite each other. This drops the suffix and reverts to stock FModel/CUE4Parse naming, keeping only the last-written of any media that collide. Ignored for other export modes.");
 
         return new(
             new Argument<ExportMode>("mode")
@@ -268,6 +271,7 @@ internal static class ConfigOptionsSupport
             skipTypesFile,
             noSkipTypes,
             scriptBytecode,
+            noAudioDisambiguation,
             output,
             ConfigOptionFactory.CreateBoolOption("--verbose", "-v", "export: Print skipped files in the log"),
             ConfigOptionFactory.CreateBoolOption("--compact", "-c", "export: Show compact progress and write full logs to a file"),
@@ -333,6 +337,7 @@ internal static class ConfigOptionsSupport
         Option<FileInfo> JsonSkipTypesFile,
         Option<bool> NoSkipTypes,
         Option<bool> ScriptBytecode,
+        Option<bool> NoAudioDisambiguation,
         Option<string> Output,
         Option<bool> Verbose,
         Option<bool> CompactProgress,

@@ -12,11 +12,11 @@ namespace UnrealAssetScout.Export.Processors;
 // Forwards its optional SourceRecorder to AudioExporter so Wwise media provenance can be recorded
 // alongside the exported artifacts.
 internal sealed class AudioPackageProcessor(
-    ExportItemInfo item, string outputDir, bool verbose, ModeStatsAccumulator modeStats, SourceRecorder? recorder)
+    ExportItemInfo item, string outputDir, bool verbose, ModeStatsAccumulator modeStats, SourceRecorder? recorder, bool disambiguate)
     : PackageModeProcessorBase(outputDir, verbose, modeStats)
 {
     protected override ExportAttemptResult TryExport(UObject export, PackageExportContext packageContext, bool nestUnderPackage) =>
-        AudioExporter.TryExport(export, item, packageContext, OutputDir, recorder);
+        AudioExporter.TryExport(export, item, packageContext, OutputDir, recorder, disambiguate);
 
     protected override string NoExportsReason => "no audio exports";
 }
