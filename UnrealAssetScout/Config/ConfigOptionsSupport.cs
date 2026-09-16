@@ -19,7 +19,7 @@ namespace UnrealAssetScout.Config;
 // Handles CLI argument parsing and CLI-related helper behavior. Used exclusively by Program.Main.
 internal static class ConfigOptionsSupport
 {
-    private const string DocumentationUrl = "https://example.com/unrealassetscout-docs";
+    private const string DocumentationUrl = "https://github.com/AndrewSav/UnrealAssetScout";
 
     internal static Options? ParseArgs(string[] args)
         => ParseArgsWithExitCode(args).Options;

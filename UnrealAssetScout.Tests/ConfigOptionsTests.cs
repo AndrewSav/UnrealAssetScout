@@ -953,7 +953,7 @@ public class ConfigOptionsTests
             Assert.Contains("export", output);
             Assert.Contains("--help", output);
             Assert.Contains("Documentation:", output);
-            Assert.Contains("https://example.com/unrealassetscout-docs", output);
+            Assert.Contains("https://github.com/AndrewSav/UnrealAssetScout", output);
             Assert.Contains("raw", output, StringComparison.OrdinalIgnoreCase);
             Assert.DoesNotContain("--config <path>", output);
             Assert.DoesNotContain("--no-config", output);
