@@ -2,7 +2,9 @@
 
 ## Unreleased
 
-- None
+- `uas update` no longer reports a failure after it has already replaced the executable. The release response was disposed at the end of the run, after the swap had renamed the running executable away, and disposing it could then be the first thing to need an assembly the runtime had not loaded yet. The update had completed, but the run printed an error and exited non-zero.
+- `uas update` now names the exception type when a failure carries no message, and appends the inner exception that the outer message defers to. The failure above reported nothing at all after the colon.
+- `uas update` no longer ends in an unhandled exception when the connection times out, or when a file it replaces is held open by another process. Both are now reported like any other update failure.
 
 ## v0.5.0
 

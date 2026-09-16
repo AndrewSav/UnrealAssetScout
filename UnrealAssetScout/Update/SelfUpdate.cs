@@ -43,33 +43,49 @@ internal static class SelfUpdate
 
         try
         {
-            using var response = Http.Send(BuildRequest(LatestReleaseApi));
-            if (IsRateLimited(response))
-                return new UpdateResult(UpdateOutcome.RateLimited, RateLimitResetsAt: ReadRateLimitReset(response));
+            Version published;
+            string assetUrl;
 
-            response.EnsureSuccessStatusCode();
-            using var release = JsonDocument.Parse(response.Content.ReadAsStream());
+            // Scoped so that the response and the document parsed from it are disposed before the
+            // swap. Disposing them afterwards can be the first thing to need an assembly the runtime
+            // has not loaded yet, and the single file bundle it would be read from is the executable
+            // the swap has just renamed away, so the load fails and a finished update reports as a
+            // failed one.
+            using (var response = Http.Send(BuildRequest(LatestReleaseApi)))
+            {
+                if (IsRateLimited(response))
+                    return new UpdateResult(UpdateOutcome.RateLimited, RateLimitResetsAt: ReadRateLimitReset(response));
 
-            var tag = release.RootElement.GetProperty("tag_name").GetString();
-            if (ParseReleaseTag(tag) is not { } published)
-                return new UpdateResult(UpdateOutcome.Failed, Detail: $"could not read a version from release tag '{tag}'");
+                response.EnsureSuccessStatusCode();
+                using var release = JsonDocument.Parse(response.Content.ReadAsStream());
 
-            if (published <= AppVersion.Current)
-                return new UpdateResult(UpdateOutcome.UpToDate, AppVersion.VersionText);
+                var tag = release.RootElement.GetProperty("tag_name").GetString();
+                if (ParseReleaseTag(tag) is not { } parsedTag)
+                    return new UpdateResult(UpdateOutcome.Failed, Detail: $"could not read a version from release tag '{tag}'");
 
-            var assetName = AssetNameFor(published, AppVersion.BuildFlavor);
-            if (FindAssetUrl(release.RootElement, assetName) is not { } assetUrl)
-                return new UpdateResult(UpdateOutcome.Failed, Detail: $"release {tag} does not publish {assetName}");
+                if (parsedTag <= AppVersion.Current)
+                    return new UpdateResult(UpdateOutcome.UpToDate, AppVersion.VersionText);
+
+                var assetName = AssetNameFor(parsedTag, AppVersion.BuildFlavor);
+                if (FindAssetUrl(release.RootElement, assetName) is not { } parsedAssetUrl)
+                    return new UpdateResult(UpdateOutcome.Failed, Detail: $"release {tag} does not publish {assetName}");
+
+                published = parsedTag;
+                assetUrl = parsedAssetUrl;
+            }
 
             var staged = executablePath + ".new";
             Stage(assetUrl, staged);
+
+            // Built before the swap for the same reason, so that nothing but the return runs while
+            // the executable is renamed.
+            var updated = new UpdateResult(UpdateOutcome.Updated, published.ToString(3));
             SwapExecutable(executablePath, staged);
-            return new UpdateResult(UpdateOutcome.Updated, published.ToString(3));
+            return updated;
         }
-        catch (Exception e) when (e is HttpRequestException or JsonException or KeyNotFoundException
-                                      or InvalidOperationException or InvalidDataException or IOException)
+        catch (Exception e) when (IsReportableFailure(e))
         {
-            return new UpdateResult(UpdateOutcome.Unreachable, Detail: e.Message);
+            return new UpdateResult(UpdateOutcome.Unreachable, Detail: Describe(e));
         }
     }
 
@@ -95,6 +111,30 @@ internal static class SelfUpdate
         return trimmed.Count(character => character == '.') == 2 && Version.TryParse(trimmed, out var version)
             ? version
             : null;
+    }
+
+    // A connect timeout arrives as TaskCanceledException, and a file another process holds open as
+    // UnauthorizedAccessException. Neither is an IOException, so both used to leave the update as an
+    // unhandled exception rather than a reported one.
+    internal static bool IsReportableFailure(Exception exception) =>
+        exception is HttpRequestException or JsonException or KeyNotFoundException
+            or InvalidOperationException or InvalidDataException or IOException
+            or OperationCanceledException or UnauthorizedAccessException;
+
+    // An exception can carry an empty Message, which reports the failure as nothing at all after the
+    // colon, and a message that defers to its inner exception says nothing without it.
+    internal static string Describe(Exception exception)
+    {
+        var descriptions = new List<string>();
+        for (Exception? current = exception; current is not null; current = current.InnerException)
+        {
+            var message = current.Message.Trim();
+            var description = message.Length == 0 ? current.GetType().Name : message;
+            if (!descriptions.Any(existing => existing.Contains(description, StringComparison.Ordinal)))
+                descriptions.Add(description);
+        }
+
+        return string.Join(" ", descriptions);
     }
 
     private static string? FindAssetUrl(JsonElement release, string assetName)
