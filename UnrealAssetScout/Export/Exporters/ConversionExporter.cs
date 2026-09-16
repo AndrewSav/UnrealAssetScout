@@ -51,9 +51,15 @@ internal static class ConversionExporter
             if (failed is not null)
                 return ExportAttemptResult.Failure(logPath, failed.Error?.Message ?? "conversion failed");
 
+            // The origin is the file itself, not the export that pulled it in. One run writes the
+            // asset plus every texture it references, and a texture shared by many assets is written
+            // once per asset; ExportResult reports files per queued object, not per file, so the
+            // path is the only per-file identity available. CUE4Parse names each file after the
+            // asset it represents, at that asset's own package path, so equal paths are equal data.
             var exportedArtifacts = results
                 .SelectMany(result => result.DiskFilePaths ?? [])
-                .Select(diskFilePath => new ExportedArtifact(logPath, diskFilePath))
+                .Select(diskFilePath => new ExportedArtifact(
+                    logPath, diskFilePath, new ArtifactOrigin(diskFilePath, null)))
                 .ToArray();
 
             return ExportAttemptResult.Success(exportedArtifacts);

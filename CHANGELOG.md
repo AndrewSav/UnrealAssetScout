@@ -8,6 +8,8 @@
 - Incremental runs now track textures written by models and animations exports, not just the meshes and materials.
 - Added `uas licenses`, printing the license and the notices for everything bundled into the executable.
 - Reworded the plan cost line an incremental run prints and removed uncrecorded time handling, since it's always recorded.
+- Texture, SVG and verse outputs are now named from the package and the export's outer chain rather than the export name alone, so two exports can no longer be written to the same file. Output layout changes only for packages that write more than one file; a package that writes one keeps its flat path. Audio is unchanged, because a Wwise or FMOD media name is already a full path identifying the media itself.
+- An export run now warns at commit when one output file is written from more than one origin, naming every origin. Media reached by several events is one file and stays silent; two different container entries landing on one name are reported.
 
 ## v0.4.0
 

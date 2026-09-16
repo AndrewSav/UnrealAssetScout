@@ -12,7 +12,7 @@ namespace UnrealAssetScout.Export.Exporters;
 // target output directory.
 internal static class SvgExporter
 {
-    internal static ExportAttemptResult TryExport(USvgAsset svgAsset, PackageExportContext packageContext, string outputDir)
+    internal static ExportAttemptResult TryExport(USvgAsset svgAsset, PackageExportContext packageContext, string outputDir, bool nestUnderPackage)
     {
         var svgData = svgAsset.GetOrDefault<byte[]>("SvgData");
         if (svgData is not { Length: > 0 })
@@ -45,8 +45,9 @@ internal static class SvgExporter
         if (encoded is null)
             return ExportAttemptResult.Failure($"{packageContext.Path}/{svgAsset.Name}", "could not encode rendered SVG");
 
-        var dir = ExportPathUtils.GetPackageDirectory(packageContext.Path);
-        var outPath = ExportPathUtils.ToOutputPath(outputDir, $"{dir}/{svgAsset.Name}", ".png");
+        var relativePath = ExportPathUtils.ComposeExportPath(
+            packageContext.Path, ExportPathUtils.ComposeExportLeaf(svgAsset), nestUnderPackage);
+        var outPath = ExportPathUtils.ToOutputPath(outputDir, relativePath, ".png");
         ExportPathUtils.WriteFile(outPath, encoded.ToArray());
         return ExportAttemptResult.Success($"{packageContext.Path}/{svgAsset.Name}", outPath);
     }

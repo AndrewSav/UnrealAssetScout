@@ -1,5 +1,6 @@
 ﻿using System.Collections.Generic;
 using System.Diagnostics;
+using System.Linq;
 using CUE4Parse.UE4.Assets.Exports;
 using UnrealAssetScout.Logging;
 using UnrealAssetScout.Package;
@@ -29,10 +30,15 @@ internal abstract class PackageModeProcessorBase(string outputDir, bool verbose,
 
     public virtual void ProcessPackage(PackageExportContext packageContext)
     {
+        // Materialized because the nesting decision is a property of the whole package, and the
+        // exports have to be counted before the first one is written.
+        var exports = packageContext.Package!.GetExports().ToList();
+        var nestUnderPackage = ShouldNestUnderPackage(exports);
+
         var exported = false;
-        foreach (var export in packageContext.Package!.GetExports())
+        foreach (var export in exports)
         {
-            var exportResult = TryExport(export, packageContext);
+            var exportResult = TryExport(export, packageContext, nestUnderPackage);
 
             if (exportResult.Failed)
                 LogFailure(packageContext, exportResult);
@@ -70,7 +76,11 @@ internal abstract class PackageModeProcessorBase(string outputDir, bool verbose,
         }
     }
 
-    protected virtual ExportAttemptResult TryExport(UObject export, PackageExportContext packageContext) =>
+    // Nesting is always safe, so the default is to nest: a mode that can cheaply prove a package
+    // writes a single file opts out of it and gets the flat path instead.
+    protected virtual bool ShouldNestUnderPackage(IReadOnlyList<UObject> exports) => true;
+
+    protected virtual ExportAttemptResult TryExport(UObject export, PackageExportContext packageContext, bool nestUnderPackage) =>
         ExportAttemptResult.NotHandled();
 
     protected virtual string NoExportsReason => "no supported exports";

@@ -10,15 +10,16 @@ namespace UnrealAssetScout.Export.Exporters;
 // and written to the output directory.
 internal static class TextureExporter
 {
-    internal static ExportAttemptResult TryExport(UTexture texture, PackageExportContext packageContext, string outputDir)
+    internal static ExportAttemptResult TryExport(UTexture texture, PackageExportContext packageContext, string outputDir, bool nestUnderPackage)
     {
         var bitmap = texture.Decode();
         if (bitmap is null)
             return ExportAttemptResult.Failure($"{packageContext.Path}/{texture.Name}", "could not decode texture");
 
         var bytes = bitmap.Encode(ETextureFormat.Png, false, out var ext);
-        var dir = ExportPathUtils.GetPackageDirectory(packageContext.Path);
-        var outPath = ExportPathUtils.ToOutputPath(outputDir, $"{dir}/{texture.Name}", $".{ext}");
+        var relativePath = ExportPathUtils.ComposeExportPath(
+            packageContext.Path, ExportPathUtils.ComposeExportLeaf(texture), nestUnderPackage);
+        var outPath = ExportPathUtils.ToOutputPath(outputDir, relativePath, $".{ext}");
         ExportPathUtils.WriteFile(outPath, bytes);
         return ExportAttemptResult.Success($"{packageContext.Path}/{texture.Name}", outPath);
     }

@@ -174,6 +174,8 @@ internal static class IncrementalRunner
         builder.SetUsmap(builder.InternUsmap(usmap));
         var manifest = builder.Build();
 
+        WarnAboutOutputsWithMoreThanOneOrigin(recorder.Artifacts);
+
         var commitWatch = Stopwatch.StartNew();
         var orphans = OrphanCleanup.FindOrphans(previous, manifest);
         var deleted = OrphanCleanup.Delete(outputDir, orphans);
@@ -183,6 +185,40 @@ internal static class IncrementalRunner
             "Commit: deleted {Deleted:N0} orphaned output(s), manifest written in {Seconds:N1}s",
             deleted, commitWatch.Elapsed.TotalSeconds);
         return (0, stats);
+    }
+
+    // Two origins writing one file makes the dump depend on the order the run happened to take, so
+    // it is reported rather than left to be discovered as a missing output later. Every one is
+    // named: the log already carries a line per exported file, so it is not the place that needs
+    // shortening, and compact progress is what keeps the console to a summary and a warning count.
+    private static void WarnAboutOutputsWithMoreThanOneOrigin(IReadOnlyList<ExportedArtifact> artifacts)
+    {
+        var collisions = DuplicateOutputCheck.FindOutputsWithMoreThanOneOrigin(artifacts);
+        if (collisions.Count == 0)
+            return;
+
+        AppLog.Warning(
+            "{Count:N0} output(s) are written from more than one origin; only the last writer survives",
+            collisions.Count);
+        foreach (var conflict in collisions)
+        {
+            AppLog.Warning("  {Output}", conflict.Output);
+            foreach (var origin in conflict.Origins)
+                AppLog.Warning("      from: {Origin}", DescribeOrigin(origin, conflict));
+        }
+    }
+
+    // The container on its own is the path these bytes have in a simple-mode dump, which is where a
+    // reader goes to compare the two. It is only qualified further when both writers came out of the
+    // same container, since then the container alone would print twice and name neither.
+    private static string DescribeOrigin(ArtifactOrigin origin, OutputOriginConflict conflict)
+    {
+        var containerIsAmbiguous = conflict.Origins.Count(
+            other => string.Equals(other.Container, origin.Container, StringComparison.OrdinalIgnoreCase)) > 1;
+
+        return containerIsAmbiguous && origin.WithinContainer is not null
+            ? $"{origin.Container} ({origin.WithinContainer})"
+            : origin.Container;
     }
 
     private static void AnnouncePlanStart(ExportManifest? previous, Options options, string outputDir)

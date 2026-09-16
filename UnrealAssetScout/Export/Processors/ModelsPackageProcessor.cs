@@ -12,7 +12,7 @@ namespace UnrealAssetScout.Export.Processors;
 internal sealed class ModelsPackageProcessor(string outputDir, bool verbose, ModeStatsAccumulator modeStats)
     : PackageModeProcessorBase(outputDir, verbose, modeStats)
 {
-    protected override ExportAttemptResult TryExport(UObject export, PackageExportContext packageContext) =>
+    protected override ExportAttemptResult TryExport(UObject export, PackageExportContext packageContext, bool nestUnderPackage) =>
         ConversionExporter.TryExportModel(export, packageContext, OutputDir);
 
     protected override string NoExportsReason => "no model exports";

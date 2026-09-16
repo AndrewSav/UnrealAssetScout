@@ -11,7 +11,7 @@ namespace UnrealAssetScout.Export.Processors;
 internal sealed class AnimationsPackageProcessor(string outputDir, bool verbose, ModeStatsAccumulator modeStats)
     : PackageModeProcessorBase(outputDir, verbose, modeStats)
 {
-    protected override ExportAttemptResult TryExport(UObject export, PackageExportContext packageContext) =>
+    protected override ExportAttemptResult TryExport(UObject export, PackageExportContext packageContext, bool nestUnderPackage) =>
         ConversionExporter.TryExportAnimation(export, packageContext, OutputDir);
 
     protected override string NoExportsReason => "no animation exports";

@@ -9,7 +9,7 @@ namespace UnrealAssetScout.Export.Exporters;
 // Called by ExportProcessor verse-mode handlers when a package export matches `UVerseDigest`.
 internal static class VerseExporter
 {
-    internal static ExportAttemptResult TryExport(UObject export, PackageExportContext packageContext, string outputDir)
+    internal static ExportAttemptResult TryExport(UObject export, PackageExportContext packageContext, string outputDir, bool nestUnderPackage)
     {
         if (export is not UVerseDigest verseDigest || string.IsNullOrWhiteSpace(verseDigest.ReadableCode))
             return ExportAttemptResult.NotHandled();
@@ -18,7 +18,7 @@ internal static class VerseExporter
         {
             var outPath = ExportPathUtils.ToOutputPath(
                 outputDir,
-                ExportPathUtils.ComposeRelativeAssetPath(packageContext.Path, export.Name),
+                ExportPathUtils.ComposeExportPath(packageContext.Path, ExportPathUtils.ComposeExportLeaf(export), nestUnderPackage),
                 ".verse");
             ExportPathUtils.WriteFile(outPath, verseDigest.ReadableCode);
             return ExportAttemptResult.Success($"{packageContext.Path}/{export.Name}", outPath);

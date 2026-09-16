@@ -80,7 +80,7 @@ internal static class AudioExporter
             packagePath,
             outputDir,
             audioBank.Name,
-            sounds.Select(sound => (sound.OutputPath, sound.Extension, Data: sound.GetData())));
+            sounds.Select(sound => (sound.OutputPath, sound.Extension, Data: sound.GetData(), Origin: OriginOf(sound))));
     }
 
     private static ExportAttemptResult TryExportWwiseEvent(UAkAudioEvent audioEvent, ExportItemInfo item, string packagePath, string outputDir, SourceRecorder? recorder)
@@ -96,7 +96,7 @@ internal static class AudioExporter
             packagePath,
             outputDir,
             audioEvent.Name,
-            sounds.Select(sound => (sound.OutputPath, sound.Extension, Data: sound.GetData())));
+            sounds.Select(sound => (sound.OutputPath, sound.Extension, Data: sound.GetData(), Origin: OriginOf(sound))));
     }
 
     private static void RecordWwiseProvenance(IEnumerable<WwiseExtractedSound> sounds, SourceRecorder? recorder)
@@ -126,7 +126,7 @@ internal static class AudioExporter
             packagePath,
             outputDir,
             fmodEvent.Name,
-            fmodProvider.ExtractEventSounds(fmodEvent).Select(sound => (sound.Name, sound.Extension, sound.Data)));
+            fmodProvider.ExtractEventSounds(fmodEvent).Select(sound => (sound.Name, sound.Extension, sound.Data, (ArtifactOrigin?) null)));
     }
 
     private static ExportAttemptResult TryExportFmodBank(UFMODBank fmodBank, ExportItemInfo item, string packagePath, string outputDir)
@@ -139,7 +139,7 @@ internal static class AudioExporter
             packagePath,
             outputDir,
             fmodBank.Name,
-            fmodProvider.ExtractBankSounds(fmodBank).Select(sound => (sound.Name, sound.Extension, sound.Data)));
+            fmodProvider.ExtractBankSounds(fmodBank).Select(sound => (sound.Name, sound.Extension, sound.Data, (ArtifactOrigin?) null)));
     }
 
     private static ExportAttemptResult TryExportCriWare(USoundAtomCueSheet cueSheet, ExportItemInfo item, string packagePath, string outputDir)
@@ -152,7 +152,7 @@ internal static class AudioExporter
             packagePath,
             outputDir,
             cueSheet.Name,
-            criWareProvider.ExtractCriWareSounds(cueSheet).Select(sound => (sound.Name, sound.Extension, sound.Data)));
+            criWareProvider.ExtractCriWareSounds(cueSheet).Select(sound => (sound.Name, sound.Extension, sound.Data, (ArtifactOrigin?) null)));
     }
 
     private static ExportAttemptResult TryExportCriWare(UAtomCueSheet cueSheet, ExportItemInfo item, string packagePath, string outputDir)
@@ -165,7 +165,7 @@ internal static class AudioExporter
             packagePath,
             outputDir,
             cueSheet.Name,
-            criWareProvider.ExtractCriWareSounds(cueSheet).Select(sound => (sound.Name, sound.Extension, sound.Data)));
+            criWareProvider.ExtractCriWareSounds(cueSheet).Select(sound => (sound.Name, sound.Extension, sound.Data, (ArtifactOrigin?) null)));
     }
 
     private static ExportAttemptResult TryExportCriWare(USoundAtomCue cue, ExportItemInfo item, string packagePath, string outputDir)
@@ -178,7 +178,7 @@ internal static class AudioExporter
             packagePath,
             outputDir,
             cue.Name,
-            criWareProvider.ExtractCriWareSounds(cue).Select(sound => (sound.Name, sound.Extension, sound.Data)));
+            criWareProvider.ExtractCriWareSounds(cue).Select(sound => (sound.Name, sound.Extension, sound.Data, (ArtifactOrigin?) null)));
     }
 
     private static ExportAttemptResult TryExportCriWare(UAtomWaveBank atomWaveBank, ExportItemInfo item, string packagePath, string outputDir)
@@ -191,7 +191,7 @@ internal static class AudioExporter
             packagePath,
             outputDir,
             atomWaveBank.Name,
-            criWareProvider.ExtractCriWareSounds(atomWaveBank).Select(sound => (sound.Name, sound.Extension, sound.Data)));
+            criWareProvider.ExtractCriWareSounds(atomWaveBank).Select(sound => (sound.Name, sound.Extension, sound.Data, (ArtifactOrigin?) null)));
     }
 
     private static ExportAttemptResult TryExportAudioEventData(UAkAudioEventData eventData, string packagePath, string outputDir)
@@ -224,12 +224,12 @@ internal static class AudioExporter
     }
 
     private static ExportAttemptResult TrySaveAudioFiles(string packagePath, string outputDir, string exportNameForLog,
-        IEnumerable<(string Name, string Extension, byte[] Data)> extracted)
+        IEnumerable<(string Name, string Extension, byte[] Data, ArtifactOrigin? Origin)> extracted)
     {
         var exportedArtifacts = new List<ExportedArtifact>();
-        foreach (var (name, extension, data) in extracted)
+        foreach (var (name, extension, data, origin) in extracted)
         {
-            var exportResult = TrySaveAudioFile(packagePath, outputDir, name, extension, data, exportNameForLog);
+            var exportResult = TrySaveAudioFile(packagePath, outputDir, name, extension, data, exportNameForLog, origin);
             if (!exportResult.Succeeded)
                 continue;
 
@@ -250,7 +250,7 @@ internal static class AudioExporter
         return ExportAttemptResult.Success($"{packagePath}/{midiFile.Name}", outPath);
     }
 
-    private static ExportAttemptResult TrySaveAudioFile(string packagePath, string outputDir, string? name, string? extension, byte[]? data, string exportNameForLog)
+    private static ExportAttemptResult TrySaveAudioFile(string packagePath, string outputDir, string? name, string? extension, byte[]? data, string exportNameForLog, ArtifactOrigin? origin = null)
     {
         if (data is null || data.Length == 0 || string.IsNullOrWhiteSpace(extension))
             return ExportAttemptResult.NotHandled();
@@ -258,6 +258,14 @@ internal static class AudioExporter
         var relativePath = ExportPathUtils.ComposeRelativeAssetPath(packagePath, name);
         var outPath = ExportPathUtils.ToOutputPath(outputDir, relativePath, "." + extension.TrimStart('.').ToLowerInvariant());
         ExportPathUtils.WriteFile(outPath, data);
-        return ExportAttemptResult.Success($"{packagePath}/{exportNameForLog}", outPath);
+        return ExportAttemptResult.Success([new ExportedArtifact($"{packagePath}/{exportNameForLog}", outPath, origin)]);
     }
+
+    // A media file is identified by the container entry it lives in together with its own path
+    // inside that entry: one bank or package entry holds many media, and one media is reached by
+    // many events, so neither half identifies it alone.
+    private static ArtifactOrigin? OriginOf(WwiseExtractedSound sound) =>
+        sound.Data is FGameFileDeferredByteData gameFileData
+            ? new ArtifactOrigin(gameFileData.File.Path, sound.OutputPath)
+            : null;
 }

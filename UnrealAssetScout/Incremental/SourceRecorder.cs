@@ -18,9 +18,15 @@ namespace UnrealAssetScout.Incremental;
 internal sealed class SourceRecorder(string outputDir, UsmapSnapshot usmap, bool scriptBytecode, bool isJsonMode)
 {
     private readonly List<SourceRecord> _records = [];
+    private readonly List<ExportedArtifact> _artifacts = [];
     private Pending? _current;
 
     internal IReadOnlyList<SourceRecord> Records => _records;
+
+    // Kept whole, unlike the relative paths that reach the manifest, because DuplicateOutputCheck
+    // needs each artifact's origin to tell one file shared by two sources from two files fighting
+    // over one name. Origins are a property of the run, not of the dump, so they are not serialized.
+    internal IReadOnlyList<ExportedArtifact> Artifacts => _artifacts;
 
     internal void BeginSource(string path, IReadOnlyList<string> constituents) =>
         _current = new Pending(path, [.. constituents]);
@@ -29,7 +35,10 @@ internal sealed class SourceRecorder(string outputDir, UsmapSnapshot usmap, bool
     {
         var pending = Require();
         foreach (var artifact in artifacts)
+        {
             pending.Outputs.Add(Path.GetRelativePath(outputDir, artifact.OutputPath));
+            _artifacts.Add(artifact);
+        }
     }
 
     internal void AddMediaDependency(string containerPath) => Require().Dependencies.Add(containerPath);

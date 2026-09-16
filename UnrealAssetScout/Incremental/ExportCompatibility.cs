@@ -9,5 +9,5 @@ internal static class ExportCompatibility
     // result is written out. Do not bump for a release, a refactor, or anything the exported bytes
     // cannot observe. Forgetting to bump carries stale outputs forward silently, which is why the
     // release checklist in CLAUDE.md asks about it.
-    internal const int Version = 1;
+    internal const int Version = 2;
 }

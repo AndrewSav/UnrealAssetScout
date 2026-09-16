@@ -15,7 +15,7 @@ internal sealed class AudioPackageProcessor(
     ExportItemInfo item, string outputDir, bool verbose, ModeStatsAccumulator modeStats, SourceRecorder? recorder)
     : PackageModeProcessorBase(outputDir, verbose, modeStats)
 {
-    protected override ExportAttemptResult TryExport(UObject export, PackageExportContext packageContext) =>
+    protected override ExportAttemptResult TryExport(UObject export, PackageExportContext packageContext, bool nestUnderPackage) =>
         AudioExporter.TryExport(export, item, packageContext, OutputDir, recorder);
 
     protected override string NoExportsReason => "no audio exports";
