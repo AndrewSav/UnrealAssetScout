@@ -84,6 +84,18 @@ internal sealed class SourceRecorder(string outputDir, UsmapSnapshot usmap, bool
         }
     }
 
+    // A source the skip list rejected without loading still records its CLR types, because
+    // ExportPlanner.SkipPredicate reads them to notice when a changed skip list makes the source
+    // exportable again. Nothing else ObservePackage gathers can change the outcome for a source
+    // that writes no output, and gathering it would undo the skip.
+    internal void ObserveSkippedPackage(IReadOnlyList<Type> exportTypes)
+    {
+        var pending = Require();
+        var clrTypeInfo = BuildClrTypeInfo(exportTypes);
+        pending.ClrTypes = clrTypeInfo.ClrTypes;
+        pending.ClrTypeChains = clrTypeInfo.ClrTypeChains;
+    }
+
     internal void EndSource(string status)
     {
         var pending = Require();

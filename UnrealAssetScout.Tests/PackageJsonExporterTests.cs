@@ -92,6 +92,69 @@ public sealed class PackageJsonExporterTests
         Assert.True(shouldSkip);
     }
 
+    [Fact]
+    public void ShouldSkipByClassName_MatchesABaseTypeOfTheResolvedClass()
+    {
+        // AnimSequence resolves to UAnimSequence, whose base UAnimSequenceBase is what the built-in
+        // list names. This is the export-map path, so no export is deserialized to decide it.
+        var shouldSkip = JsonPackageProcessor.ShouldSkipByClassName(
+            ["AnimSequence"],
+            new HashSet<string>(StringComparer.OrdinalIgnoreCase) { "UAnimSequenceBase" });
+
+        Assert.True(shouldSkip);
+    }
+
+    [Fact]
+    public void ShouldSkipByClassName_IsFalseWhenAClassNameDoesNotResolve()
+    {
+        // A blueprint class is not in the registry. Deciding here would skip a package that the
+        // loaded-object check would have kept, so an unresolved name has to defer.
+        var shouldSkip = JsonPackageProcessor.ShouldSkipByClassName(
+            ["SomeBlueprintClassThatIsNotRegistered_C"],
+            new HashSet<string>(StringComparer.OrdinalIgnoreCase) { "UObject" });
+
+        Assert.False(shouldSkip);
+    }
+
+    [Fact]
+    public void ShouldSkipByClassName_IsFalseWhenOnlySomeExportsAreSkipped()
+    {
+        var shouldSkip = JsonPackageProcessor.ShouldSkipByClassName(
+            ["Texture2D", "AnimSequence"],
+            new HashSet<string>(StringComparer.OrdinalIgnoreCase) { "UTexture" });
+
+        Assert.False(shouldSkip);
+    }
+
+    [Fact]
+    public void ShouldSkipByClassName_IsFalseForAnEmptyPackage()
+    {
+        var shouldSkip = JsonPackageProcessor.ShouldSkipByClassName(
+            [],
+            new HashSet<string>(StringComparer.OrdinalIgnoreCase) { "UTexture" });
+
+        Assert.False(shouldSkip);
+    }
+
+    [Fact]
+    public void ShouldSkipByClassName_IsFalseForAnEmptySkipList()
+    {
+        var shouldSkip = JsonPackageProcessor.ShouldSkipByClassName(
+            ["Texture2D"],
+            new HashSet<string>(StringComparer.OrdinalIgnoreCase));
+
+        Assert.False(shouldSkip);
+    }
+
+    [Fact]
+    public void ShouldSkipByClassName_IsFalseWhenAClassNameIsMissing()
+    {
+        var shouldSkip = JsonPackageProcessor.ShouldSkipByClassName(
+            [null],
+            new HashSet<string>(StringComparer.OrdinalIgnoreCase) { "UObject" });
+
+        Assert.False(shouldSkip);
+    }
     private class BaseSkippedType : UObject;
 
     private class DerivedSkippedType : BaseSkippedType;

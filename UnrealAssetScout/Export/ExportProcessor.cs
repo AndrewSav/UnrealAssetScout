@@ -206,8 +206,15 @@ public static class ExportProcessor
             }
             else if (packageContext.Package is { } package)
             {
-                recorder?.ObservePackage(package, item.Provider);
                 status = ResolveStatus(processor);
+
+                // Observing deserializes every export, which is the cost skipping from the export
+                // map exists to avoid. Only a source skipped that way can be observed cheaply; one
+                // skipped after its exports loaded has already paid, so it is observed in full.
+                if (processor is JsonPackageProcessor { SkippedExportTypes: { } skippedExportTypes })
+                    recorder?.ObserveSkippedPackage(skippedExportTypes);
+                else
+                    recorder?.ObservePackage(package, item.Provider);
             }
         }
         catch (Exception e)

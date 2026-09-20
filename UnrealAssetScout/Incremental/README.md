@@ -166,7 +166,8 @@ Runs after every source in the work list has been attempted. Order matters and i
    has actually run is it known what it produced.
 3. Orphans are deleted, then any directory those deletions left empty is pruned up to the output
    root.
-4. The manifest is written last, temp file then rename.
+4. Outputs written from more than one origin are warned about; see the sticky-parts entry below.
+5. The manifest is written last, temp file then rename.
 
 | File | Role |
 |---|---|
@@ -174,6 +175,7 @@ Runs after every source in the work list has been attempted. Order matters and i
 | `OrphanCleanup` | Finds and deletes outputs no source in the new manifest claims, then prunes emptied directories |
 | `ExportManifestStore.Save` | Atomic write: temp file, then rename |
 | `ExportManifest`, `ManifestSource`, `ManifestUsmapBlock`, `BytecodeState`, `SourceStatus` | The manifest's own data model |
+| `DuplicateOutputCheck`, `OutputOriginConflict` | Finds outputs that more than one origin wrote, and carries the origins so a warning can name them |
 
 If the manifest on disk looks internally inconsistent, an id pointing at the wrong string, an
 entry missing a table row it should have, the fault is almost always in `ManifestBuilder`'s
@@ -228,9 +230,11 @@ multi-line entry per source.
 | `schema` | Format version. Checked in `ExportManifestStore.TryLoad`: a manifest whose schema does not match the current build's is an error in the same shape as an unparseable one, naming both values and pointing at `--rebuild`. Bumped only when defaulting a field could change what a plan decides, which is why `p` required a bump and `ms` did not: an absent `p` leaves the propagation graph without edges and silently under-invalidates, while an absent `ms` only leaves a cost unknown until that source is next exported |
 | `mode` | Mismatch is a gate error: a different mode produces entirely different outputs |
 | `game` | Mismatch is a gate error: changes parsing in ways no source fingerprint would catch |
+| `uasVersion` | The build that last wrote the manifest, for a human reading it. Nothing in PLAN reads it; the gate compares `tool` instead, for the reason in the sticky-parts entry below |
 | `tool` | Every `(uas, cue4parse)` pair, each carrying a git sha, that has contributed output currently on disk, most recently used last. Gated: see the sticky-parts entry below |
 | `skipTypes` | The resolved skip set, stored so PLAN can diff it against the current run's rather than gate on it |
 | `scriptBytecode` | The *effective* value, `mode == json && flag`, not the raw flag; see below |
+| `audioDisambiguation` | The *effective* value, `mode == audio && !--no-audio-disambiguation`. Mismatch is a gate error, not a staleness rule: the flag renames every Wwise media file, so there is no subset worth re-exporting. A run that decided nothing was stale would leave the whole dump under the previous naming |
 | `containers` | Guards a wrong AES key or a missing pak silently unmounting containers, which would otherwise make every source look removed and orphan deletion would wipe the dump |
 
 Both halves of a `tool` pair carry a git sha, stamped into assembly metadata by an MSBuild target
@@ -294,6 +298,10 @@ found to hash.
 | `b` | `true`, `false` or `unknown`; see the sticky-parts entry below |
 | `s` | `ok`, `failed`, or `skipped-by-skip-list` |
 | `ms` | Milliseconds this source took to export, measured across the work between `BeginSource` and `EndSource`. Carried forward unchanged for a source this run did not re-export, so a plan can total the cost of every source it covers, not only the ones it re-exported |
+
+A source with `s` of `skipped-by-skip-list` carries only `x` of those export-derived fields. The skip
+list is matched against the export map before the exports are loaded, so `t`, `u`, `o`, `p` and `b` are
+never observed for it; see the sticky-parts entry on skipping without loading.
 
 Sources are keyed differently by mode: package modes key by the package file only, with payloads
 appearing solely in `c`; `simple` keys everything else that is a source in that mode; `raw` gives
@@ -403,6 +411,46 @@ turning the flag off changes nothing about that fact, and having already been ob
 flag on means the value cannot suddenly become stale by turning it on again. `true` and `unknown`
 both have to be treated as possibly wrong on a flip, either because real bytecode would newly
 appear or disappear from output, or because the value was never actually observed.
+
+### Why is a skipped source not observed, and what does that cost on a bytecode flag flip?
+
+Deserializing an export can cost orders of magnitude more than writing it: an animation decompresses
+every curve and bone key first, and a package whose every export is on the skip list writes nothing at
+all. So `json` mode resolves each export's class from the export map and matches the skip list against
+that, and a source skipped that way is never loaded. `SourceRecorder.ObserveSkippedPackage` then records
+the CLR types the export map already yielded, and nothing else.
+
+`x` has to survive that, because the skip predicate reads it: without it a source skipped under one skip
+list compares equal under any other, and relaxing the list would silently export nothing. The rest is
+dropped, because every rule it feeds can only ever mark stale a source that writes no output, and
+re-planning such a source just skips it again.
+
+`b` is the visible cost. It stays `unknown`, since deciding `true` or `false` needs `ScriptBytecode` off
+a deserialized `UStruct`, and `false` is the only state a flag flip may skip. So flipping `--script-bytecode`
+re-plans every skipped source. They write nothing and are cheap to skip again, but a plan will report
+them as updates. Recording `false` for them instead was rejected: it would assert something never
+observed, and a skipped package that does contain bytecode would be recorded wrongly.
+
+A class name the registry cannot resolve, a blueprint class among them, makes this path decline and the
+package load as before. Such a source is observed in full, so it carries every field.
+
+### Why are outputs with more than one origin warned about rather than deduplicated?
+
+An output two origins write is one whose bytes on disk depend on the order the run took, not on the
+input: the last writer survives, and which one that is can change between runs. That is worth saying
+out loud, but it cannot be resolved here, because both writers are real data and nothing keeps them in
+step. Renaming one would change output for inputs that did not change.
+
+The comparison is on origin, not on content or on artifact count. Several artifacts legitimately share
+one output when they came from the same place: Wwise media referenced by more than one event is one
+file, not a clash. Two pak entries holding equal bytes today are still separate data, so equal content
+is not treated as the same origin either. `ArtifactOrigin` is therefore the container entry plus, when
+that entry holds more than one thing, which part of it.
+
+The warning names the container rather than the artifact, because the container is the path those bytes
+have in a `simple` dump, which is where a reader goes to compare the two copies. It is qualified
+further only when both writers came from the same container, since otherwise the container alone would
+print twice and identify neither.
 
 ### Why is the skip list diffed rather than gated, and why do base-type chains live in a manifest-level table?
 
