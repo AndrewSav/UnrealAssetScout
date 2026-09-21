@@ -1,4 +1,8 @@
-﻿using CUE4Parse.UE4.Assets.Exports;
+﻿using System.Globalization;
+using System.Text;
+using CUE4Parse.UE4.Assets.Exports;
+using Newtonsoft.Json;
+using UnrealAssetScout.Export;
 using UnrealAssetScout.Export.Exporters;
 using UnrealAssetScout.Export.Processors;
 
@@ -155,6 +159,58 @@ public sealed class PackageJsonExporterTests
 
         Assert.False(shouldSkip);
     }
+
+    [Fact]
+    public void TryExport_WritesTheSameBytesAsSerializingToAString()
+    {
+        // Output must not change, because exports are compared across runs. Run under a culture that
+        // writes a decimal comma, so a culture leaking into number formatting would show up here.
+        using var temp = new TempDir();
+        UObject[] exports = [new NumericExport(), new NumericExport()];
+        var expected = new UTF8Encoding(false).GetBytes(JsonConvert.SerializeObject(exports, Formatting.Indented));
+
+        var previousCulture = CultureInfo.CurrentCulture;
+        ExportAttemptResult result;
+        try
+        {
+            CultureInfo.CurrentCulture = CultureInfo.GetCultureInfo("de-DE");
+            result = PackageJsonExporter.TryExport("Game/Content/Asset.uasset", temp.Path, exports);
+        }
+        finally
+        {
+            CultureInfo.CurrentCulture = previousCulture;
+        }
+
+        Assert.True(result.Succeeded);
+        Assert.Equal(expected, File.ReadAllBytes(result.ExportedArtifacts[0].OutputPath));
+    }
+
+    [Fact]
+    public void TryExport_LeavesNoFileWhenSerializationFails()
+    {
+        // A failed package records no output in the manifest, so a file left behind would never be
+        // cleaned up by a later run, and a truncated one would read as a valid export.
+        using var temp = new TempDir();
+        var outputPath = ExportPathUtils.ToOutputPath(temp.Path, "Game/Content/Broken.uasset", ".json");
+
+        var result = PackageJsonExporter.TryExport("Game/Content/Broken.uasset", temp.Path, [new ThrowingExport()]);
+
+        Assert.True(result.Failed);
+        Assert.False(File.Exists(outputPath));
+    }
+
+    [Fact]
+    public void TryExport_FailsOnAnUnpairedSurrogateRatherThanRewritingIt()
+    {
+        // The JSON encoder rejects invalid UTF-16. A lenient encoder would instead write U+FFFD and
+        // report success, changing the bytes of any package carrying a malformed string.
+        using var temp = new TempDir();
+
+        var result = PackageJsonExporter.TryExport("Game/Content/Surrogate.uasset", temp.Path, [new UnpairedSurrogateExport()]);
+
+        Assert.True(result.Failed);
+    }
+
     private class BaseSkippedType : UObject;
 
     private class DerivedSkippedType : BaseSkippedType;
@@ -162,4 +218,39 @@ public sealed class PackageJsonExporterTests
     private sealed class GrandchildSkippedType : DerivedSkippedType;
 
     private sealed class RetainedType : UObject;
+
+    private sealed class NumericExport : UObject
+    {
+        protected override void WriteJson(JsonWriter writer, JsonSerializer serializer)
+        {
+            base.WriteJson(writer, serializer);
+            writer.WritePropertyName("Single");
+            writer.WriteValue(1.5f);
+            writer.WritePropertyName("Double");
+            writer.WriteValue(-12345.6789d);
+            writer.WritePropertyName("Large");
+            writer.WriteValue(1.0e21d);
+        }
+    }
+
+    private sealed class UnpairedSurrogateExport : UObject
+    {
+        protected override void WriteJson(JsonWriter writer, JsonSerializer serializer)
+        {
+            base.WriteJson(writer, serializer);
+            writer.WritePropertyName("Text");
+            writer.WriteValue("before\uD800after");
+        }
+    }
+
+    private sealed class ThrowingExport : UObject
+    {
+        protected override void WriteJson(JsonWriter writer, JsonSerializer serializer)
+        {
+            base.WriteJson(writer, serializer);
+            writer.WritePropertyName("Partial");
+            writer.WriteValue("written before the failure");
+            throw new InvalidOperationException("serialization failed part way");
+        }
+    }
 }
