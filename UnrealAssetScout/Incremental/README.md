@@ -757,32 +757,32 @@ belongs upstream.
 ## What the tests do and do not cover
 
 Every direct staleness rule, the gate, propagation to a fixpoint, carry-forward re-interning, and
-the options classification are covered by planner unit tests that need no game: they drive
-`ExportPlanner`, `ManifestBuilder`, `SourceSetBuilder` and the fingerprint readers against plain
-data and small on-disk fixtures.
+the handling of every recorded option are covered by unit tests that need no game: they drive
+`ExportPlanner`, `ManifestBuilder`, `SourceSetBuilder`, `OrphanCleanup`, `ExportManifestStore` and
+the fingerprint readers against plain data and small on-disk fixtures.
 
-An integration suite gated on `UAS_TEST_PAKS` and `UAS_TEST_USMAP`, with `UAS_TEST_USMAP_2`
-additionally required by the regenerated-usmap case, drives `Program.Run` end to end against a
-real, locally supplied game: idempotence on a second run with every timestamp preserved, recovery of a
-hand-deleted output, survival of an untracked file, exact re-export from a hand-edited fingerprint,
-a second usmap generated for the same game version invalidating nothing, gate errors for a wrong
-mode, a truncated manifest and a mismatched schema, `--rebuild` recovering from a corrupt
-manifest, invariance under varied logging options, and an isolated dependency-content-change case
-that excludes the changed target from scope so only the dependency-fingerprint comparison, not
-reverse-edge propagation, can explain the importer going stale. A separate script-driven end-to-end
-protocol, `UnrealAssetScout/Scripts/Invoke-IncrementalE2E.ps1`, exports an old build, applies an
+No automated test drives a live export. The end-to-end check is a script-driven protocol, run by
+hand: `UnrealAssetScout/Scripts/Invoke-IncrementalE2E.ps1` exports an old build, applies an
 incremental run against a new build over that output, and compares it byte for byte against a
-from-scratch export of the new build; it takes both builds' containers and usmaps as parameters
+from-scratch export of the new build. It takes both builds' containers and usmaps as parameters
 rather than assuming any fixed pair, along with the export mode, an optional path filter that
 scopes every run in the protocol to the same subtree, and extra arguments passed through to each
 run. A filtered run only proves the scope it covers, so it suits iterating on a planner change
 while an unfiltered run remains the gate.
 
-Explicitly not covered by any of the above:
+Explicitly not covered by the unit tests, and exercised only when the script is run:
 
+- **The stages working together.** `IncrementalRunner`, `SourceRecorder` and COMMIT are unit tested
+  through extracted helpers and fixtures, never against a live provider.
 - **IoStore fingerprinting.** The unit tests exercise the pak path; the base64 conversion of an
-  IoStore chunk hash has no dedicated unit test and depends on the environment-gated integration
-  suite or a real IoStore container to exercise at all.
+  IoStore chunk hash has no dedicated unit test, and the script exercises it only when run against
+  a game that ships IoStore containers.
+
+Not covered by either:
+
+- **Options that are not recorded.** Nothing checks that an option classified as not recorded
+  really cannot change a written output. The script passes the same extra arguments to every run,
+  so it cannot show that varying one leaves the output alone.
 - **External Wwise files**, since no locally available test corpus produces one.
 - **FMOD and CriWare provenance**, for the same reason: no locally available test corpus exercises
   either middleware's extraction path.
