@@ -2,7 +2,9 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Text;
 using CUE4Parse.UE4.Assets.Exports;
+using Newtonsoft.Json;
 
 namespace UnrealAssetScout.Export;
 
@@ -10,8 +12,14 @@ namespace UnrealAssetScout.Export;
 // Called by package and simple exporters such as VerseExporter, PackageJsonExporter, and
 // SimpleExportSupport to build safe output paths and persist extracted content on disk, and to
 // derive the per-export leaf and output path that keep two different exports off one file.
+// JSON is streamed to disk rather than built in memory first, because a single .NET string has a
+// size ceiling that the JSON of some assets exceeds.
 internal static class ExportPathUtils
 {
+    // Matches File.WriteAllText, which wrote JSON output before it was streamed: no byte order mark,
+    // and invalid UTF-16 rejected rather than silently replaced.
+    private static readonly UTF8Encoding Utf8NoBomStrict = new(encoderShouldEmitUTF8Identifier: false, throwOnInvalidBytes: true);
+
     internal static string GetPackageDirectory(string packagePath) =>
         packagePath.Contains('/') ? packagePath[..packagePath.LastIndexOf('/')] : string.Empty;
 
@@ -98,6 +106,40 @@ internal static class ExportPathUtils
     {
         Directory.CreateDirectory(Path.GetDirectoryName(path)!);
         File.WriteAllBytes(path, content);
+    }
+
+    internal static void WriteJson(string path, object value)
+    {
+        Directory.CreateDirectory(Path.GetDirectoryName(path)!);
+        try
+        {
+            using var textWriter = new StreamWriter(path, append: false, Utf8NoBomStrict, bufferSize: 65536);
+            using var jsonWriter = new JsonTextWriter(textWriter) { Formatting = Formatting.Indented };
+            var serializer = JsonSerializer.CreateDefault();
+            serializer.Formatting = Formatting.Indented;
+            serializer.Serialize(jsonWriter, value);
+        }
+        catch
+        {
+            DeletePartialOutput(path);
+            throw;
+        }
+    }
+
+    // A failed export records no output in the manifest, so a partly written file would never be
+    // cleaned up by a later run and would read as a complete export.
+    private static void DeletePartialOutput(string path)
+    {
+        try
+        {
+            File.Delete(path);
+        }
+        catch (IOException)
+        {
+        }
+        catch (UnauthorizedAccessException)
+        {
+        }
     }
 
     private static string SanitizeRelativePath(string relativePath)

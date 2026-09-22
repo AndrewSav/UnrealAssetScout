@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using CUE4Parse.UE4.Readers;
-using Newtonsoft.Json;
 
 namespace UnrealAssetScout.Export.Exporters;
 
@@ -26,9 +25,8 @@ internal static class SimpleExportSupport
             using (archive)
             {
                 var payload = read(archive);
-                var json = JsonConvert.SerializeObject(payload, Formatting.Indented);
                 var outPath = ExportPathUtils.ToOutputPath(outputDir, path, ".json");
-                ExportPathUtils.WriteFile(outPath, json);
+                ExportPathUtils.WriteJson(outPath, payload);
                 return ExportAttemptResult.Success(path, outPath);
             }
         }

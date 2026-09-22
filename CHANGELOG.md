@@ -13,6 +13,7 @@
 - The manifest header now lists only the settings the export mode reads. `skipTypes` and `scriptBytecode` appear only in `json` manifests, `audioDisambiguation` only in `audio` manifests, and the `usmap` block is left out in `simple` and `raw`, which load no packages. An existing manifest still loads and plans exactly as before, and nothing is re-exported.
 - An export no longer processes a file once per container that holds it. A file shipped in both a base container and a patch container that replaces it was exported twice, base copy last, so the dump held the unpatched file. Each path is now exported once, from the container the game itself reads it from, and `list` shows it once.
 - Planning an incremental run over a large dump is faster. The check that every recorded output still exists now lists the output directory once instead of asking about each file, and each imported package is looked up once per plan instead of once for every source that imports it. Together they cut the decision step to about a quarter of its time. Plans are unchanged.
+- `export simple` now streams the JSON it writes for files such as `AssetRegistry.bin` and `.locres` straight to disk, as `export json` already does, so a file whose JSON is too large to hold in a single string no longer fails. Output is unchanged, and a conversion that fails part way through no longer leaves a partial file behind.
 
 ## v0.5.0
 
