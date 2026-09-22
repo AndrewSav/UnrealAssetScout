@@ -75,8 +75,8 @@ internal static class IncrementalRunner
             Sources: sources,
             Fingerprints: fingerprints.ByPath,
             Usmap: usmap,
-            OutputExists: relative => File.Exists(Path.Combine(outputDir, relative)),
-            ResolvePackagePath: identity => ResolvePackagePath(provider, identity),
+            OutputExists: new ExistingOutputs(outputDir).Contains,
+            ResolvePackagePath: MemoiseResolution(identity => ResolvePackagePath(provider, identity)),
             Rebuild: options.Rebuild,
             AcceptToolVersion: options.AcceptToolVersion));
 
@@ -257,6 +257,20 @@ internal static class IncrementalRunner
         RuntimeLogging.LogSummary(
             "Plan: recorded export times for the sources being updated total {Cost}",
             Formatting.FormatElapsed(TimeSpan.FromMilliseconds(statistics.UpdateCostMilliseconds)));
+    }
+
+    // A package is imported by many sources, and each resolution walks every mounted container.
+    // Not thread-safe: the planner calls it from one thread.
+    internal static Func<string, string?> MemoiseResolution(Func<string, string?> resolve)
+    {
+        var resolved = new Dictionary<string, string?>(StringComparer.Ordinal);
+        return identity =>
+        {
+            if (!resolved.TryGetValue(identity, out var path))
+                resolved[identity] = path = resolve(identity);
+
+            return path;
+        };
     }
 
     private static string? ResolvePackagePath(AbstractVfsFileProvider provider, string identity) =>

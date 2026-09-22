@@ -3,7 +3,8 @@
 namespace UnrealAssetScout.Tests;
 
 // Covers IncrementalRunner.ResolveIdentity, the pure prefix-discrimination-and-parse step behind
-// ResolvePackagePath, with fake delegates in place of the provider. Nothing here mounts a game:
+// ResolvePackagePath, and MemoiseResolution, which wraps it for a plan, with fake delegates in
+// place of the provider. Nothing here mounts a game:
 // the delegates are the only thing standing in for AbstractVfsFileProvider.FilesById and
 // TryGetGameFile, so a regression in the real provider lookups cannot be caught here, only a
 // regression in which lookup gets called with what argument.
@@ -68,5 +69,36 @@ public sealed class IncrementalRunnerIdentityResolutionTests
             resolveGameFilePath: _ => null);
 
         Assert.Null(resolved);
+    }
+
+    [Fact]
+    public void MemoiseResolution_SameIdentityTwice_ResolvesItOnce()
+    {
+        var calls = 0;
+        var resolve = IncrementalRunner.MemoiseResolution(identity => { calls++; return "Game/" + identity; });
+
+        Assert.Equal("Game//Script/A", resolve("/Script/A"));
+        Assert.Equal("Game//Script/A", resolve("/Script/A"));
+        Assert.Equal(1, calls);
+    }
+
+    [Fact]
+    public void MemoiseResolution_UnresolvedIdentity_IsRememberedAsUnresolved()
+    {
+        var calls = 0;
+        var resolve = IncrementalRunner.MemoiseResolution(_ => { calls++; return null; });
+
+        Assert.Null(resolve("/Game/Missing"));
+        Assert.Null(resolve("/Game/Missing"));
+        Assert.Equal(1, calls);
+    }
+
+    [Fact]
+    public void MemoiseResolution_IdentitiesDifferingOnlyInCase_AreResolvedSeparately()
+    {
+        var resolve = IncrementalRunner.MemoiseResolution(identity => identity);
+
+        Assert.Equal("/Game/A", resolve("/Game/A"));
+        Assert.Equal("/game/a", resolve("/game/a"));
     }
 }

@@ -58,6 +58,7 @@ skipped package leaving a stale file nobody notices.
 | `ExportCompatibility`, `ToolVersionPair` | What a dump was produced by, for the tool gate: this build's export-behaviour number and the pinned CUE4Parse commit |
 | `PlanInputs`, `PlanResult`, `ExportPlan`, `SourceCandidate` | The planner's input and output shapes |
 | `ExportPlanner` | The gate, the direct staleness rules, propagation to a fixpoint, and the work list / carry-forward split |
+| `ExistingOutputs` | Answers the missing-output rule from one listing of the output directory, falling back to `File.Exists` for any name the listing does not hold |
 | `StaleReason`, `PlanStatistics` | Which rule first marked each source stale, and the counts and previous cost behind the summary lines a run prints |
 
 If output is missing or stale for something that should have invalidated it, or present when it
@@ -820,6 +821,14 @@ size.
 - **IoStore chunk hashes are read once per container and cached for the run**, not once per file
   requested, so re-reading `.utoc` metadata is a per-container fixed cost rather than a per-file
   one.
+- **Whether each recorded output still exists is answered from one listing of the output
+  directory**, not one file system call per output. A directory listing returns many names per
+  call, and on a re-run nearly every output is present, so almost every answer is a set lookup. A
+  name the listing does not hold goes to `File.Exists` before it counts as missing, so the answer
+  never differs from asking each file directly.
+- **A dependency identity is resolved to a path once per plan**, not once per source that imports
+  it. Resolving goes through the provider's own lookup, which visits every mounted container, and a
+  commonly imported package is a dependency of thousands of sources.
 
 ## Rejected alternatives
 
