@@ -6,12 +6,15 @@ using UnrealAssetScout.Package;
 namespace UnrealAssetScout.Export.Exporters;
 
 // Exports Unreal texture assets to image files on disk.
-// Called by ExportProcessor textures-mode handlers when a supported `UTexture` needs to be decoded
-// and written to the output directory.
+// Called by TexturesPackageProcessor for every `UTexture` export. A texture that stores no image
+// data has nothing to export and is declined rather than reported as a failure.
 internal static class TextureExporter
 {
     internal static ExportAttemptResult TryExport(UTexture texture, PackageExportContext packageContext, string outputDir, bool nestUnderPackage)
     {
+        if (!HasImageData(texture))
+            return ExportAttemptResult.NotHandled();
+
         var bitmap = texture.Decode();
         if (bitmap is null)
             return ExportAttemptResult.Failure($"{packageContext.Path}/{texture.Name}", "could not decode texture");
@@ -23,4 +26,9 @@ internal static class TextureExporter
         ExportPathUtils.WriteFile(outPath, bytes);
         return ExportAttemptResult.Success($"{packageContext.Path}/{texture.Name}", outPath);
     }
+
+    // Render targets and media textures are drawn into while the game runs, so their cooked asset
+    // stores settings but no pixels.
+    private static bool HasImageData(UTexture texture) =>
+        texture.PlatformData is { Mips.Length: > 0 } or { VTData: not null } or { CPUCopy: not null };
 }
