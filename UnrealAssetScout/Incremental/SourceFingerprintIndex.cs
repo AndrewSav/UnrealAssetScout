@@ -4,13 +4,17 @@ using CUE4Parse.FileProvider.Objects;
 using CUE4Parse.FileProvider.Vfs;
 using CUE4Parse.UE4.IO;
 using CUE4Parse.UE4.IO.Objects;
+using CUE4Parse.UE4.Pak;
 using CUE4Parse.UE4.Pak.Objects;
+using CUE4Parse.UE4.Readers;
 using UnrealAssetScout.Logging;
 
 namespace UnrealAssetScout.Incremental;
 
 // Every mounted container entry's path mapped to the fingerprint its packer already stored.
 // Built once by IncrementalRunner at the start of PLAN and handed to ExportPlanner as plain data.
+// Pak entries are read in one batch by PakInlineHeaderBatchReader, IoStore entries from each
+// container's table of contents.
 // Fingerprinting is blanket rather than selective: any path we might later need is then covered
 // with no rule about which paths qualify, and only referenced paths are persisted into the
 // manifest. Entries whose container stores no usable hash are counted, not silently dropped.
@@ -21,14 +25,36 @@ internal sealed class SourceFingerprintIndex
 
     internal static SourceFingerprintIndex Build(AbstractVfsFileProvider provider)
     {
+        var files = ResolvedFiles(provider).ToList();
+        var pakFingerprints = ReadPakFingerprints(files);
         var ioStoreHashes = new Dictionary<IoStoreReader, IReadOnlyDictionary<FIoChunkId, string>>();
 
-        return FromEntries(ResolvedFiles(provider).Select(file => (file.Path, Fingerprint: file switch
+        return FromEntries(files.Select(file => (file.Path, Fingerprint: file switch
         {
-            FPakEntry pakEntry => PakInlineHeaderFingerprints.TryRead(pakEntry, out var hash) ? hash : null,
+            FPakEntry pakEntry => pakFingerprints.GetValueOrDefault(pakEntry),
             FIoStoreEntry ioEntry => IoStoreFingerprint(ioEntry, ioStoreHashes),
             _ => null
         })));
+    }
+
+    // A pak mounted from a stream a caller supplied may not hold the file's bytes, so only a pak
+    // CUE4Parse reads straight from a file is read by path; any other goes through its archive.
+    private static Dictionary<FPakEntry, string?> ReadPakFingerprints(IReadOnlyList<GameFile> files)
+    {
+        var entries = files.OfType<FPakEntry>().ToList();
+        var requests = entries.Select(entry => entry.Vfs is PakFileReader { Ar: FRandomAccessFileStreamArchive } reader
+            ? new PakInlineHeaderRequest(reader.Path, entry.Offset, entry.CompressedSize, entry.UncompressedSize,
+                PakInlineHeaderLayout.HashOffset(reader.Info.Version, reader.Info.IsSubVersion))
+            : new PakInlineHeaderRequest(null, 0, 0, 0, 0)).ToList();
+
+        var fingerprints = PakInlineHeaderBatchReader.ReadFingerprints(requests,
+            index => PakInlineHeaderFingerprints.TryRead(entries[index], out var hash) ? hash : null);
+
+        var byEntry = new Dictionary<FPakEntry, string?>(entries.Count, ReferenceEqualityComparer.Instance);
+        for (var index = 0; index < entries.Count; index++)
+            byEntry[entries[index]] = fingerprints[index];
+
+        return byEntry;
     }
 
     // FileProviderDictionary.Keys and Values both enumerate every mounted container's own path set

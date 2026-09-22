@@ -50,7 +50,8 @@ skipped package leaving a stale file nobody notices.
 | `ExportManifestStore`, `ManifestSourceConverter` | Loads the previous manifest; a load failure here, unless `--rebuild`, is fatal. The converter is what keeps source entries to one line each when saving |
 | `SourceSetBuilder` | Builds S, the current source set, from resolved provider paths, the mode's extension rules, `--filter` and the type filter |
 | `SourceFingerprintIndex` | Path to stored hash, for every resolved container entry |
-| `PakInlineHeaderFingerprints`, `PakInlineHeaderLayout` | Reads the SHA-1 a pak entry's inline header already carries |
+| `PakInlineHeaderBatchReader`, `PakInlineHeaderRequest` | Reads the inline header of every pak entry in one batch: sorted by offset within each pak and shared out to a pool of reader threads. A pak that is not a plain file on disk falls back to one entry at a time through CUE4Parse's own archive |
+| `PakInlineHeaderFingerprints`, `PakInlineHeaderLayout` | Interprets a pak entry's inline header: where the stored SHA-1 sits, and the check against the entry's own sizes. Also the one-entry fallback read |
 | `IoStoreTocFingerprints` | Re-reads `.utoc` metadata to map an IoStore chunk to its stored hash |
 | `UsmapFingerprints`, `UsmapSnapshot`, `UsmapTypeNode` | Reduces a loaded usmap to per-type and per-enum semantic fingerprints plus a reference graph |
 | `UsmapClosure` | Expands a recorded type name into everything reachable from it, memoised |
@@ -797,7 +798,14 @@ size.
   container's packer already produced a strong hash for every entry at pack time; reading twenty
   stored bytes is a fixed, small cost per entry regardless of how large the entry's content is,
   where computing a fingerprint from content would scale with total dump size on every single run,
-  even when almost nothing changed.
+  even when almost nothing changed. For a pak, though, that fixed cost is a small read at a
+  scattered offset in a large file, and on a cold cache each one is a round trip to the device, so
+  a game with hundreds of thousands of pak entries spends most of PLAN waiting on them. They are
+  therefore read by a pool of threads, sorted by offset within each pak so the device sees nearby
+  requests together. The threads are dedicated and each opens its own handles, because a read that
+  misses the file cache blocks its caller even on an overlapped handle, and callers sharing one
+  synchronous handle are serialized on it. IoStore containers carry their hashes in the `.utoc`,
+  read in one go, and do not have this cost.
 - **Package headers are read without deserializing exports.** PLAN needs each package's import map
   to build `d` and the dependency graph, and that map is available from a package's header without
   constructing the export objects it describes. Avoiding full deserialization is what keeps PLAN
