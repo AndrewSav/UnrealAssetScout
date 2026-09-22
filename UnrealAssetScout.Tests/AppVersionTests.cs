@@ -28,28 +28,6 @@ public sealed class AppVersionTests
     }
 
     [Fact]
-    public void UasVersionText_CarriesBothHalves()
-    {
-        Assert.Contains("+", AppVersion.UasVersionText);
-    }
-
-    [Fact]
-    public void UasVersionText_EndsWithTheStampedRevision()
-    {
-        var metadata = typeof(AppVersion).Assembly
-            .GetCustomAttributes<AssemblyMetadataAttribute>()
-            .ToList();
-
-        var uasGitSha = metadata.FirstOrDefault(attribute => attribute.Key == "UasGitSha")?.Value;
-
-        // An absent attribute means the StampGitRevisions target did not run at all, which is a
-        // stronger failure than a fallback value.
-        Assert.False(string.IsNullOrEmpty(uasGitSha));
-
-        Assert.EndsWith($"+{uasGitSha}", AppVersion.UasVersionText);
-    }
-
-    [Fact]
     public void Cue4ParseGitSha_IsABareRevisionWithNoVersion()
     {
         // The manifest records this verbatim. CUE4Parse is pinned by commit, so a version attached
@@ -70,14 +48,6 @@ public sealed class AppVersionTests
 
         Assert.Equal(uasGitSha, AppVersion.UasGitSha);
         Assert.Equal(cue4ParseGitSha, AppVersion.Cue4ParseGitSha);
-    }
-
-    [Fact]
-    public void VersionText_IsAThreePartVersion()
-    {
-        // The incremental manifest records this string verbatim and the updater compares it against
-        // a three-part release tag, so its shape is a compatibility surface, not a display choice.
-        Assert.Equal(3, AppVersion.VersionText.Split('.').Length);
     }
 
     [Fact]

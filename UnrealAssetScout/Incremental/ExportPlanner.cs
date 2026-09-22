@@ -37,9 +37,10 @@ internal static class ExportPlanner
         // Flipping this renames every Wwise media file, so unlike the bytecode flag there is no
         // subset worth re-exporting: an incremental run would rewrite the whole dump anyway, and
         // one that decided nothing was stale would leave every file under the previous naming.
-        if (manifest.AudioDisambiguation != inputs.AudioDisambiguation)
+        var recordedAudioDisambiguation = manifest.AudioDisambiguation ?? false;
+        if (recordedAudioDisambiguation != inputs.AudioDisambiguation)
             return PlanResult.Failed(
-                $"manifest was written with audio disambiguation {Describe(manifest.AudioDisambiguation)}, " +
+                $"manifest was written with audio disambiguation {Describe(recordedAudioDisambiguation)}, " +
                 $"this run has it {Describe(inputs.AudioDisambiguation)}; pass --rebuild to replace it");
 
         var mounted = new HashSet<string>(inputs.Containers, System.StringComparer.OrdinalIgnoreCase);
@@ -166,13 +167,13 @@ internal static class ExportPlanner
         if (entry.E)
             return StaleReason.ExternalMedia;
 
-        if (inputs.ScriptBytecode != inputs.Manifest!.ScriptBytecode &&
+        if (inputs.ScriptBytecode != (inputs.Manifest!.ScriptBytecode ?? false) &&
             entry.B is not BytecodeState.False)
         {
             return StaleReason.BytecodeFlagFlipped;
         }
 
-        if (SkipPredicate(index, entry, inputs.Manifest.SkipTypes) !=
+        if (SkipPredicate(index, entry, inputs.Manifest.SkipTypes ?? []) !=
             SkipPredicate(index, entry, inputs.SkipTypes))
         {
             return StaleReason.SkipListChanged;
@@ -320,12 +321,13 @@ internal static class ExportPlanner
         // Must match UsmapClosure's visited-set comparer: names here can differ in case from what
         // UsmapClosure.Of walks, even after propagating CUE4Parse's own Types comparer.
         var changed = new HashSet<string>(System.StringComparer.OrdinalIgnoreCase);
+        var recorded = manifest.Usmap ?? new ManifestUsmapBlock();
 
         CollectChanges(
-            manifest.Usmap.Types.ToDictionary(pair => manifest.UeTypes[pair.Key], pair => pair.Value),
+            recorded.Types.ToDictionary(pair => manifest.UeTypes[pair.Key], pair => pair.Value),
             current.TypeFingerprints, changed);
         CollectChanges(
-            manifest.Usmap.Enums.ToDictionary(pair => manifest.UeEnums[pair.Key], pair => pair.Value),
+            recorded.Enums.ToDictionary(pair => manifest.UeEnums[pair.Key], pair => pair.Value),
             current.EnumFingerprints, changed);
 
         return changed;

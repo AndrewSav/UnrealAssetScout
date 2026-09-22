@@ -15,6 +15,7 @@ public sealed class ExportManifestStoreTests
             Tool = [new ToolVersionPair(1, "a098f0b6")],
             SkipTypes = ["UTexture2D"],
             ScriptBytecode = true,
+            AudioDisambiguation = true,
             Containers = ["Pal-Windows.pak"],
             Usmap = new ManifestUsmapBlock
             {
@@ -51,8 +52,9 @@ public sealed class ExportManifestStoreTests
         Assert.Equal(1, Assert.Single(loaded.Tool).Export);
         Assert.Equal(["UTexture2D"], loaded.SkipTypes);
         Assert.True(loaded.ScriptBytecode);
+        Assert.True(loaded.AudioDisambiguation);
         Assert.Equal(["Pal-Windows.pak"], loaded.Containers);
-        Assert.Equal("9f2a", loaded.Usmap.Types[0]);
+        Assert.Equal("9f2a", loaded.Usmap!.Types[0]);
         Assert.Equal("77ab", loaded.Usmap.Enums[0]);
         Assert.Equal(2, loaded.Paths.Count);
         Assert.Equal("Pal\\Content\\T_Foo.png", Assert.Single(loaded.Outputs));
@@ -102,6 +104,49 @@ public sealed class ExportManifestStoreTests
 
         Assert.Contains(Environment.NewLine, text);
         Assert.Contains("  \"mode\": \"json\"", text);
+    }
+
+    [Fact]
+    public void Save_LeavesOutModeSpecificSettingsThatAreNotSet()
+    {
+        using var dir = new TempDir();
+        ExportManifestStore.Save(dir.Path, new ExportManifest { Mode = "raw", Game = "GAME_UE5_1" });
+
+        var json = File.ReadAllText(ExportManifestStore.PathFor(dir.Path));
+
+        Assert.DoesNotContain("\"skipTypes\"", json);
+        Assert.DoesNotContain("\"scriptBytecode\"", json);
+        Assert.DoesNotContain("\"audioDisambiguation\"", json);
+        Assert.DoesNotContain("\"usmap\"", json);
+    }
+
+    [Fact]
+    public void Save_WritesModeSpecificSettingsThatAreSetEvenWhenOff()
+    {
+        using var dir = new TempDir();
+        ExportManifestStore.Save(dir.Path, new ExportManifest { Mode = "json", SkipTypes = [], ScriptBytecode = false });
+
+        var json = File.ReadAllText(ExportManifestStore.PathFor(dir.Path));
+
+        Assert.Contains("\"skipTypes\": []", json);
+        Assert.Contains("\"scriptBytecode\": false", json);
+    }
+
+    [Fact]
+    public void TryLoad_ManifestWithoutModeSpecificSettings_LoadsThemAsAbsent()
+    {
+        using var dir = new TempDir();
+        File.WriteAllText(ExportManifestStore.PathFor(dir.Path),
+            $"{{\"schema\": {ExportManifestStore.CurrentSchema}, \"mode\": \"raw\"}}");
+
+        var loaded = ExportManifestStore.TryLoad(dir.Path, out var error);
+
+        Assert.Null(error);
+        Assert.NotNull(loaded);
+        Assert.Null(loaded.SkipTypes);
+        Assert.Null(loaded.ScriptBytecode);
+        Assert.Null(loaded.AudioDisambiguation);
+        Assert.Null(loaded.Usmap);
     }
 
     [Fact]

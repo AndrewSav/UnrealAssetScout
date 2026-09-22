@@ -195,9 +195,8 @@ multi-line entry per source.
   "schema": 2,
   "mode": "textures",
   "game": "GAME_UE5_1",
-  "tool": [{ "uas": "0.2.1.0+1a2a277", "cue4parse": "1.2.2+a098f0b6" }],
-  "skipTypes": ["UTexture2D"],
-  "scriptBytecode": false,
+  "tool": [{ "export": 3, "cue4parse": "ec6595e46448" }],
+  "uasVersion": "0.5.0+4b5c404b678a (self-contained)",
   "containers": ["pakchunk0-Windows.pak"],
 
   "usmap": {
@@ -226,22 +225,31 @@ multi-line entry per source.
 
 ### Global block
 
+A setting that only some modes read appears only in those modes' manifests: `skipTypes` and
+`scriptBytecode` in `json`, `audioDisambiguation` in `audio`, and the `usmap` block in every mode
+that loads packages, which is all of them but `simple` and `raw`. The example above is a `textures`
+manifest, so it has the usmap block and none of the three settings. PLAN reads a missing setting as
+off, which is also what the run itself uses outside the setting's mode, so leaving it out never
+changes a plan.
+
 | Field | Purpose |
 |---|---|
 | `schema` | Format version. Checked in `ExportManifestStore.TryLoad`: a manifest whose schema does not match the current build's is an error in the same shape as an unparseable one, naming both values and pointing at `--rebuild`. Bumped only when defaulting a field could change what a plan decides, which is why `p` required a bump and `ms` did not: an absent `p` leaves the propagation graph without edges and silently under-invalidates, while an absent `ms` only leaves a cost unknown until that source is next exported |
 | `mode` | Mismatch is a gate error: a different mode produces entirely different outputs |
 | `game` | Mismatch is a gate error: changes parsing in ways no source fingerprint would catch |
 | `uasVersion` | The build that last wrote the manifest, for a human reading it. Nothing in PLAN reads it; the gate compares `tool` instead, for the reason in the sticky-parts entry below |
-| `tool` | Every `(uas, cue4parse)` pair, each carrying a git sha, that has contributed output currently on disk, most recently used last. Gated: see the sticky-parts entry below |
-| `skipTypes` | The resolved skip set, stored so PLAN can diff it against the current run's rather than gate on it |
-| `scriptBytecode` | The *effective* value, `mode == json && flag`, not the raw flag; see below |
-| `audioDisambiguation` | The *effective* value, `mode == audio && !--no-audio-disambiguation`. Mismatch is a gate error, not a staleness rule: the flag renames every Wwise media file, so there is no subset worth re-exporting. A run that decided nothing was stale would leave the whole dump under the previous naming |
+| `tool` | Every `(export, cue4parse)` pair that has contributed output currently on disk, most recently used last: `ExportCompatibility.Version` and the CUE4Parse commit hash. Gated: see the sticky-parts entry below |
+| `skipTypes` | `json` only. The resolved skip set, stored so PLAN can diff it against the current run's rather than gate on it |
+| `scriptBytecode` | `json` only. Whether `--script-bytecode` was given; see below for why it is not recorded elsewhere |
+| `audioDisambiguation` | `audio` only. `!--no-audio-disambiguation`. Mismatch is a gate error, not a staleness rule: the flag renames every Wwise media file, so there is no subset worth re-exporting. A run that decided nothing was stale would leave the whole dump under the previous naming |
 | `containers` | Guards a wrong AES key or a missing pak silently unmounting containers, which would otherwise make every source look removed and orphan deletion would wipe the dump |
 
-Both halves of a `tool` pair carry a git sha, stamped into assembly metadata by an MSBuild target
-at build time. Neither uas nor CUE4Parse exposed a git-derived identity before this feature: a
-build number alone would not change across a submodule bump, which is exactly the kind of change
-this gate exists to catch.
+The CUE4Parse half of a `tool` pair is the submodule's commit hash, stamped into assembly metadata
+by an MSBuild target at build time; the same target stamps uas's own hash, which `uasVersion`
+shows. CUE4Parse exposed no git-derived identity before this feature: a build number alone would
+not change across a submodule bump, which is exactly the kind of change this gate exists to catch.
+The export half is `ExportCompatibility.Version`, bumped by hand; see below for why the gate
+compares that rather than the uas version.
 
 ### Interning tables
 
@@ -276,6 +284,9 @@ falsely invalidate on every regeneration regardless of whether anything the game
 changed. No file path is stored: an empty `types` map means no usmap was supplied for this run,
 which correctly invalidates every source that ever depended on usmap-known types, since every
 recorded type name it used has effectively disappeared.
+
+The block is left out in `simple` and `raw`, which never load a package, so no source in them
+records a usmap type for it to invalidate. PLAN reads a missing block as an empty one.
 
 `fingerprints` is keyed by path id, not by source: a payload file is not a source in every mode
 but still needs a hash so its change can invalidate whatever reads it, and a dependency identity
@@ -545,15 +556,14 @@ about which code is compiled in. A version recorded here would also be unreliabl
 `-p:Version` is a global MSBuild property that reaches every project in the graph, so a release
 build stamps CUE4Parse's assembly with the uas version.
 
-### Why is `scriptBytecode` recorded as the effective value rather than the flag?
+### Why is `scriptBytecode` recorded only in `json` mode?
 
 The flag only affects output in `json` mode; in every other mode CUE4Parse's bytecode extraction
-has no bearing on what gets written. Recording the raw flag value would mean flipping
-`--script-bytecode` while exporting, say, textures would trip the "flag flipped and `b` is not
-`false`" rule for every textures source, invalidating work that could not possibly have changed.
-Recording `mode == json && flag`, the value that actually governs whether bytecode is ever read or
-written, means a flip outside `json` mode is invisible to this rule because it genuinely cannot
-affect output.
+has no bearing on what gets written. Comparing the raw flag would mean flipping `--script-bytecode`
+while exporting, say, textures would trip the "flag flipped and `b` is not `false`" rule for every
+textures source, invalidating work that could not possibly have changed. Outside `json` the field
+is left out of the manifest and read as off, and the run neutralises its own flag to off the same
+way, so a flip there is invisible to this rule because it genuinely cannot affect output.
 
 ### Additional invariants without an automated guard
 
@@ -675,8 +685,9 @@ an option to the CLI means adding a row here.
 | `--output` | Identity; it is where the manifest lives |
 | `--usmap` | Not recorded. The file's content is fingerprinted semantically instead, so regenerating it to a different path is not a change |
 | `--filter`, `--expression`, `--types` | Scope |
-| `--skip-types`, `--skip-types-file`, `--no-skip-types` | Precise, resolved into `skipTypes` |
-| `--script-bytecode` | Precise, the effective `scriptBytecode` value |
+| `--skip-types`, `--skip-types-file`, `--no-skip-types` | Precise, resolved into `skipTypes`; `json` only |
+| `--script-bytecode` | Precise, `scriptBytecode`; `json` only |
+| `--no-audio-disambiguation` | Gate, `audioDisambiguation`; `audio` only |
 | `--rebuild`, `--dry-run` | Control the run itself; nothing to record |
 | `--verbose`, `--compact`, `--mark-usmap`, `--log`, `--log-append`, `--no-log`, `--log-libs`, `--log-counter` | Not recorded. Affect logging, progress display and run statistics only, never a written output |
 | `--format`, `--file` | `list` modes only, which write no dump |

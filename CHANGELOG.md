@@ -1,4 +1,4 @@
-﻿# Changelog
+# Changelog
 
 ## Unreleased
 
@@ -10,6 +10,7 @@
 - `export json` no longer fails with "Insufficient memory to continue the execution of the program" on a package whose JSON is too large to hold in a single string. The JSON is now streamed to the output file instead of being built in memory first. Output of every package that exported before is unchanged. A package that fails part way through serialization no longer leaves a partial file behind. The export compatibility version is bumped, because an incremental run does not retry a package that failed before.
 - Planning is faster on games that ship classic `.pak` files. The stored hash of every pak entry is now read by a pool of threads, sorted by offset within each pak, instead of one entry at a time. The gain is largest on a cold cache: an order of magnitude on an SSD, and a smaller one on an HDD. Fingerprints, and so plans and manifests, are unchanged.
 - `export textures` no longer reports a texture that stores no image data as a failure. Render targets and media textures are drawn into while the game runs, so their cooked asset has no pixels to export; such a texture is now skipped quietly, and a package holding nothing else is no longer recorded as failed. Output is unchanged.
+- The manifest header now lists only the settings the export mode reads. `skipTypes` and `scriptBytecode` appear only in `json` manifests, `audioDisambiguation` only in `audio` manifests, and the `usmap` block is left out in `simple` and `raw`, which load no packages. An existing manifest still loads and plans exactly as before, and nothing is re-exported.
 
 ## v0.5.0
 

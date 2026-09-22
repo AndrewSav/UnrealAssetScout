@@ -7,6 +7,8 @@ namespace UnrealAssetScout.Incremental;
 // under, the tool versions that produced the outputs, interning tables, and one entry per source.
 // Written by IncrementalRunner at the end of a run and read back by ExportPlanner on the next run
 // to decide what is stale. It is always a complete description of the dump, never a delta.
+// The settings only some modes read are null, and left out of the file, in every other mode;
+// ExportPlanner reads a missing one as off.
 internal sealed class ExportManifest
 {
     [JsonPropertyName("schema")] public int Schema { get; set; } = 2;
@@ -14,11 +16,11 @@ internal sealed class ExportManifest
     [JsonPropertyName("game")] public string Game { get; set; } = string.Empty;
     [JsonPropertyName("tool")] public List<ToolVersionPair> Tool { get; set; } = [];
     [JsonPropertyName("uasVersion")] public string UasVersion { get; set; } = string.Empty;
-    [JsonPropertyName("skipTypes")] public List<string> SkipTypes { get; set; } = [];
-    [JsonPropertyName("scriptBytecode")] public bool ScriptBytecode { get; set; }
-    [JsonPropertyName("audioDisambiguation")] public bool AudioDisambiguation { get; set; }
+    [JsonPropertyName("skipTypes")] public List<string>? SkipTypes { get; set; }
+    [JsonPropertyName("scriptBytecode")] public bool? ScriptBytecode { get; set; }
+    [JsonPropertyName("audioDisambiguation")] public bool? AudioDisambiguation { get; set; }
     [JsonPropertyName("containers")] public List<string> Containers { get; set; } = [];
-    [JsonPropertyName("usmap")] public ManifestUsmapBlock Usmap { get; set; } = new();
+    [JsonPropertyName("usmap")] public ManifestUsmapBlock? Usmap { get; set; }
     [JsonPropertyName("paths")] public List<string> Paths { get; set; } = [];
     [JsonPropertyName("outputs")] public List<string> Outputs { get; set; } = [];
     [JsonPropertyName("ueTypes")] public List<string> UeTypes { get; set; } = [];

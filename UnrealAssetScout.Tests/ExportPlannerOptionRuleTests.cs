@@ -70,6 +70,27 @@ public sealed class ExportPlannerOptionRuleTests
     }
 
     [Fact]
+    public void Plan_ManifestWithoutSkipTypes_ReadsThemAsEmpty()
+    {
+        var manifest = ManifestWithTextureExport();
+        manifest.SkipTypes = null;
+
+        var unchanged = ExportPlanner.Plan(PlanInputsFixture.Create(
+            manifest: manifest,
+            sources: PlanInputsFixture.Sources("Game/A.uasset"),
+            fingerprints: PlanInputsFixture.Fingerprints("Game/A.uasset"),
+            skipTypes: []));
+        var nowSkipped = ExportPlanner.Plan(PlanInputsFixture.Create(
+            manifest: manifest,
+            sources: PlanInputsFixture.Sources("Game/A.uasset"),
+            fingerprints: PlanInputsFixture.Fingerprints("Game/A.uasset"),
+            skipTypes: ["UTexture2D"]));
+
+        Assert.Empty(unchanged.Plan!.WorkList);
+        Assert.Equal(["Game/A.uasset"], nowSkipped.Plan!.WorkList);
+    }
+
+    [Fact]
     public void Plan_SkipSetChangedButPredicateDoesNot_DoesNotInvalidate()
     {
         var manifest = ManifestWithTextureExport();
@@ -151,6 +172,24 @@ public sealed class ExportPlannerOptionRuleTests
             sources: PlanInputsFixture.Sources("Game/A.uasset"),
             fingerprints: PlanInputsFixture.Fingerprints("Game/A.uasset"),
             scriptBytecode: false));
+
+        Assert.Equal(expectStale ? 1 : 0, result.Plan!.WorkList.Count);
+    }
+
+    [Theory]
+    [InlineData(false, false)]
+    [InlineData(true, true)]
+    public void Plan_ManifestWithoutScriptBytecode_ReadsItAsOff(bool scriptBytecode, bool expectStale)
+    {
+        var manifest = PlanInputsFixture.Manifest("Game/A.uasset");
+        manifest.ScriptBytecode = null;
+        manifest.Sources[0].B = BytecodeState.Unknown;
+
+        var result = ExportPlanner.Plan(PlanInputsFixture.Create(
+            manifest: manifest,
+            sources: PlanInputsFixture.Sources("Game/A.uasset"),
+            fingerprints: PlanInputsFixture.Fingerprints("Game/A.uasset"),
+            scriptBytecode: scriptBytecode));
 
         Assert.Equal(expectStale ? 1 : 0, result.Plan!.WorkList.Count);
     }

@@ -1,17 +1,105 @@
-﻿using UnrealAssetScout.Incremental;
+﻿using UnrealAssetScout.Export;
+using UnrealAssetScout.Incremental;
 
 namespace UnrealAssetScout.Tests;
 
 public sealed class ManifestBuilderTests
 {
-    private static ManifestBuilder NewBuilder() => new(
-        mode: "json",
+    private static ManifestBuilder NewBuilder(
+        ExportMode mode = ExportMode.Json,
+        IReadOnlyList<string>? skipTypes = null,
+        bool scriptBytecode = false,
+        bool audioDisambiguation = false) => new(
+        mode: mode,
         game: "GAME_UE5_1",
         tool: [new ToolVersionPair(1, "b")],
-        audioDisambiguation: false,
-        skipTypes: [],
-        scriptBytecode: false,
+        audioDisambiguation: audioDisambiguation,
+        skipTypes: skipTypes ?? [],
+        scriptBytecode: scriptBytecode,
         containers: ["a.pak"]);
+
+    private static UsmapSnapshot Usmap(string typeName, string enumName) => new()
+    {
+        TypeFingerprints = new Dictionary<string, string> { [typeName] = "fp-" + typeName },
+        EnumFingerprints = new Dictionary<string, string> { [enumName] = "fp-" + enumName },
+        Types = new Dictionary<string, UsmapTypeNode>()
+    };
+
+    [Fact]
+    public void Build_JsonMode_RecordsTheJsonSettingsButNotAudioDisambiguation()
+    {
+        var manifest = NewBuilder(ExportMode.Json, skipTypes: ["UTexture"], scriptBytecode: true).Build();
+
+        Assert.Equal("json", manifest.Mode);
+        Assert.Equal(["UTexture"], manifest.SkipTypes);
+        Assert.True(manifest.ScriptBytecode);
+        Assert.Null(manifest.AudioDisambiguation);
+        Assert.NotNull(manifest.Usmap);
+    }
+
+    [Fact]
+    public void Build_AudioMode_RecordsAudioDisambiguationButNotTheJsonSettings()
+    {
+        var manifest = NewBuilder(ExportMode.Audio, skipTypes: ["UTexture"], audioDisambiguation: true).Build();
+
+        Assert.True(manifest.AudioDisambiguation);
+        Assert.Null(manifest.SkipTypes);
+        Assert.Null(manifest.ScriptBytecode);
+        Assert.NotNull(manifest.Usmap);
+    }
+
+    [Fact]
+    public void Build_AudioModeWithDisambiguationOff_StillRecordsIt()
+    {
+        var manifest = NewBuilder(ExportMode.Audio, audioDisambiguation: false).Build();
+
+        Assert.False(manifest.AudioDisambiguation);
+    }
+
+    [Theory]
+    [InlineData(ExportMode.Textures)]
+    [InlineData(ExportMode.Models)]
+    [InlineData(ExportMode.Animations)]
+    [InlineData(ExportMode.Verse)]
+    public void Build_OtherPackageModes_RecordOnlyTheUsmap(ExportMode mode)
+    {
+        var manifest = NewBuilder(mode, skipTypes: ["UTexture"], scriptBytecode: true, audioDisambiguation: true).Build();
+
+        Assert.Null(manifest.SkipTypes);
+        Assert.Null(manifest.ScriptBytecode);
+        Assert.Null(manifest.AudioDisambiguation);
+        Assert.NotNull(manifest.Usmap);
+    }
+
+    [Theory]
+    [InlineData(ExportMode.Simple)]
+    [InlineData(ExportMode.Raw)]
+    public void Build_ModesThatLoadNoPackages_RecordNoModeSpecificSettingsAndNoUsmap(ExportMode mode)
+    {
+        var builder = NewBuilder(mode, skipTypes: ["UTexture"], scriptBytecode: true, audioDisambiguation: true);
+        builder.SetUsmap(Usmap("Texture2D", "EPixelFormat"));
+
+        var manifest = builder.Build();
+
+        Assert.Null(manifest.SkipTypes);
+        Assert.Null(manifest.ScriptBytecode);
+        Assert.Null(manifest.AudioDisambiguation);
+        Assert.Null(manifest.Usmap);
+        Assert.Empty(manifest.UeTypes);
+        Assert.Empty(manifest.UeEnums);
+    }
+
+    [Fact]
+    public void Build_PackageMode_KeysTheUsmapBlockByInternedNames()
+    {
+        var builder = NewBuilder(ExportMode.Textures);
+        builder.SetUsmap(Usmap("Texture2D", "EPixelFormat"));
+
+        var manifest = builder.Build();
+
+        Assert.Equal("fp-Texture2D", manifest.Usmap!.Types[manifest.UeTypes.IndexOf("Texture2D")]);
+        Assert.Equal("fp-EPixelFormat", manifest.Usmap.Enums[manifest.UeEnums.IndexOf("EPixelFormat")]);
+    }
 
     [Fact]
     public void AddRecorded_InternsPathsOnceAndReferencesThemById()

@@ -51,6 +51,27 @@ public sealed class ExportPlannerGateTests
     }
 
     [Fact]
+    public void Plan_ManifestWithoutAudioDisambiguation_ReadsItAsDisabled()
+    {
+        var manifest = PlanInputsFixture.Manifest("Game/A.uasset");
+        manifest.AudioDisambiguation = null;
+
+        var disabled = ExportPlanner.Plan(PlanInputsFixture.Create(
+            manifest: manifest,
+            sources: PlanInputsFixture.Sources("Game/A.uasset"),
+            fingerprints: PlanInputsFixture.Fingerprints("Game/A.uasset"),
+            audioDisambiguation: false));
+        var enabled = ExportPlanner.Plan(PlanInputsFixture.Create(
+            manifest: manifest,
+            sources: PlanInputsFixture.Sources("Game/A.uasset"),
+            fingerprints: PlanInputsFixture.Fingerprints("Game/A.uasset"),
+            audioDisambiguation: true));
+
+        Assert.Null(disabled.Error);
+        Assert.Contains("audio disambiguation disabled", enabled.Error);
+    }
+
+    [Fact]
     public void Plan_RebuildWithAudioDisambiguationDiffering_Proceeds()
     {
         var manifest = PlanInputsFixture.Manifest("Game/A.uasset");

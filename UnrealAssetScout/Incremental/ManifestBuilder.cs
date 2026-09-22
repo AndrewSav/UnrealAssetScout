@@ -1,17 +1,19 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
+using UnrealAssetScout.Export;
 using UnrealAssetScout.Utils;
 
 namespace UnrealAssetScout.Incremental;
 
 // Assembles the new manifest for a run, interning every string and every set exactly once.
 // Called by IncrementalRunner during COMMIT: AddRecorded for each re-exported source, CarryForward
-// for each unchanged one, SetFingerprint for every container entry, InternUsmap passed to SetUsmap,
-// then Build.
+// for each unchanged one, SetFingerprint for every container entry, SetUsmap, then Build.
 // CarryForward re-interns rather than copying ids, because the old and new tables never agree once
 // paths or types have come and gone.
+// A setting only one mode reads is recorded for that mode alone, and the usmap only for the modes
+// that load packages, so the header shows only what applies to the mode.
 internal sealed class ManifestBuilder(
-    string mode,
+    ExportMode mode,
     string game,
     IReadOnlyList<ToolVersionPair> tool,
     IReadOnlyList<string> skipTypes,
@@ -29,7 +31,7 @@ internal sealed class ManifestBuilder(
     private readonly Dictionary<int, ManifestSource> _sources = [];
     private readonly Dictionary<string, string> _fingerprints = [];
     private readonly Dictionary<string, List<string>> _clrTypeChains = [];
-    private ManifestUsmapBlock _usmap = new();
+    private UsmapSnapshot _usmap = UsmapSnapshot.Empty;
 
     internal void AddRecorded(SourceRecord record)
     {
@@ -93,14 +95,7 @@ internal sealed class ManifestBuilder(
 
     internal void SetFingerprint(string path, string hash) => _fingerprints[path] = hash;
 
-    internal void SetUsmap(ManifestUsmapBlock usmap) => _usmap = usmap;
-
-    // Must be called, and its result passed to SetUsmap, before Build takes its table snapshots.
-    internal ManifestUsmapBlock InternUsmap(UsmapSnapshot usmap) => new()
-    {
-        Types = usmap.TypeFingerprints.ToDictionary(pair => _ueTypes.Intern(pair.Key), pair => pair.Value),
-        Enums = usmap.EnumFingerprints.ToDictionary(pair => _ueEnums.Intern(pair.Key), pair => pair.Value)
-    };
+    internal void SetUsmap(UsmapSnapshot usmap) => _usmap = usmap;
 
     internal ExportManifest Build()
     {
@@ -112,18 +107,20 @@ internal sealed class ManifestBuilder(
             pair => _clrTypes.Intern(pair.Key),
             pair => pair.Value.Select(_clrTypes.Intern).ToList());
         var clrTypes = _clrTypes.ToList();
+        var usmap = mode is ExportMode.Simple or ExportMode.Raw ? null : InternUsmap(_usmap);
+        var isJsonMode = mode == ExportMode.Json;
 
         return new()
         {
-            Mode = mode,
+            Mode = mode.ToString().ToLowerInvariant(),
             Game = game,
             Tool = [.. tool],
             UasVersion = AppVersion.DisplayText,
-            SkipTypes = [.. skipTypes],
-            ScriptBytecode = scriptBytecode,
-            AudioDisambiguation = audioDisambiguation,
+            SkipTypes = isJsonMode ? [.. skipTypes] : null,
+            ScriptBytecode = isJsonMode ? scriptBytecode : null,
+            AudioDisambiguation = mode == ExportMode.Audio ? audioDisambiguation : null,
             Containers = [.. containers],
-            Usmap = _usmap,
+            Usmap = usmap,
             Paths = _paths.ToList(),
             Outputs = _outputs.ToList(),
             UeTypes = _ueTypes.ToList(),
@@ -139,6 +136,12 @@ internal sealed class ManifestBuilder(
             Sources = _sources
         };
     }
+
+    private ManifestUsmapBlock InternUsmap(UsmapSnapshot usmap) => new()
+    {
+        Types = usmap.TypeFingerprints.ToDictionary(pair => _ueTypes.Intern(pair.Key), pair => pair.Value),
+        Enums = usmap.EnumFingerprints.ToDictionary(pair => _ueEnums.Intern(pair.Key), pair => pair.Value)
+    };
 
     private static int? InternNameSet(IReadOnlyList<string>? names, StringTable nameTable, SetTable setTable)
     {

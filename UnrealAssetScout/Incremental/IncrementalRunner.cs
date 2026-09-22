@@ -116,7 +116,7 @@ internal static class IncrementalRunner
         }
 
         var builder = new ManifestBuilder(
-            mode.ToString().ToLowerInvariant(), options.Game.Value.ToString(), plan.ToolVersions,
+            mode, options.Game.Value.ToString(), plan.ToolVersions,
             options.JsonSkipTypeNames, effectiveScriptBytecode, effectiveAudioDisambiguation, containers);
 
         var recorder = new SourceRecorder(outputDir, usmap, effectiveScriptBytecode, isJsonMode);
@@ -177,7 +177,7 @@ internal static class IncrementalRunner
                 builder.SetFingerprint(identity, hash);
         }
 
-        builder.SetUsmap(builder.InternUsmap(usmap));
+        builder.SetUsmap(usmap);
         var manifest = builder.Build();
 
         WarnAboutOutputsWithMoreThanOneOrigin(recorder.Artifacts);

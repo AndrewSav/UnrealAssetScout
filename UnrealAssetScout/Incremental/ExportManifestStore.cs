@@ -2,6 +2,7 @@
 using System.IO;
 using System.Text.Encodings.Web;
 using System.Text.Json;
+using System.Text.Json.Serialization;
 
 namespace UnrealAssetScout.Incremental;
 
@@ -24,10 +25,12 @@ internal static class ExportManifestStore
 
     // Indented so the global block at the top can be read when reviewing how a run was
     // configured; ManifestSourceConverter keeps each source entry on one line so that block is
-    // not buried under, and the file not doubled by, the entries below it.
+    // not buried under, and the file not doubled by, the entries below it. For the same reader, a
+    // setting the mode never reads is left out rather than written as a value that means nothing.
     private static readonly JsonSerializerOptions SerializerOptions = new()
     {
         WriteIndented = true,
+        DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull,
         Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping, // Cosmetic: keeps punctuation out of \uXXXX form.
         Converters = { new ManifestSourceConverter() }
     };

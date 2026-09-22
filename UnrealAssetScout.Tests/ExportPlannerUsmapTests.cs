@@ -23,10 +23,13 @@ public sealed class ExportPlannerUsmapTests
         manifest.UeTypes = ["Texture2D", "Inner"];
         manifest.TypeSets = [[0]];
         manifest.Sources[0].T = 0;
-        manifest.Usmap.Types = new Dictionary<int, string>
+        manifest.Usmap = new ManifestUsmapBlock
         {
-            [0] = texture2DFingerprint,
-            [1] = innerFingerprint
+            Types = new Dictionary<int, string>
+            {
+                [0] = texture2DFingerprint,
+                [1] = innerFingerprint
+            }
         };
         return manifest;
     }
@@ -48,6 +51,27 @@ public sealed class ExportPlannerUsmapTests
             usmap: Snapshot(types: Graph())));
 
         Assert.Empty(result.Plan!.WorkList);
+    }
+
+    [Fact]
+    public void Plan_ManifestWithoutUsmapBlock_ReadsItAsEmpty()
+    {
+        var manifest = ManifestWithUsmap("fp-Texture2D", "fp-Inner");
+        manifest.Usmap = null;
+
+        var stillEmpty = ExportPlanner.Plan(PlanInputsFixture.Create(
+            manifest: manifest,
+            sources: PlanInputsFixture.Sources("Game/A.uasset"),
+            fingerprints: PlanInputsFixture.Fingerprints("Game/A.uasset"),
+            usmap: UsmapSnapshot.Empty));
+        var nowPopulated = ExportPlanner.Plan(PlanInputsFixture.Create(
+            manifest: manifest,
+            sources: PlanInputsFixture.Sources("Game/A.uasset"),
+            fingerprints: PlanInputsFixture.Fingerprints("Game/A.uasset"),
+            usmap: Snapshot(types: Graph())));
+
+        Assert.Empty(stillEmpty.Plan!.WorkList);
+        Assert.Equal(["Game/A.uasset"], nowPopulated.Plan!.WorkList);
     }
 
     [Fact]
@@ -125,7 +149,7 @@ public sealed class ExportPlannerUsmapTests
         manifest.UeTypes = ["Texture2D"];
         manifest.TypeSets = [[0]];
         manifest.Sources[0].T = 0;
-        manifest.Usmap.Types = new Dictionary<int, string> { [0] = "fp-Texture2D" };
+        manifest.Usmap = new ManifestUsmapBlock { Types = new Dictionary<int, string> { [0] = "fp-Texture2D" } };
 
         var result = ExportPlanner.Plan(PlanInputsFixture.Create(
             manifest: manifest,
@@ -150,7 +174,7 @@ public sealed class ExportPlannerUsmapTests
     {
         var manifest = ManifestWithUsmap("fp-Texture2D", "fp-Inner");
         manifest.UeEnums = ["EPixelFormat"];
-        manifest.Usmap.Enums = new Dictionary<int, string> { [0] = "fp-EPixelFormat" };
+        manifest.Usmap!.Enums = new Dictionary<int, string> { [0] = "fp-EPixelFormat" };
 
         var result = ExportPlanner.Plan(PlanInputsFixture.Create(
             manifest: manifest,
@@ -298,8 +322,11 @@ public sealed class ExportPlannerUsmapTests
         manifest.TypeSets = [[0]];
         manifest.Sources[0].T = 0;
         manifest.UeEnums = ["EPixelFormat"];
-        manifest.Usmap.Types = new Dictionary<int, string> { [0] = before.TypeFingerprints["Texture2D"] };
-        manifest.Usmap.Enums = new Dictionary<int, string> { [0] = before.EnumFingerprints["EPixelFormat"] };
+        manifest.Usmap = new ManifestUsmapBlock
+        {
+            Types = new Dictionary<int, string> { [0] = before.TypeFingerprints["Texture2D"] },
+            Enums = new Dictionary<int, string> { [0] = before.EnumFingerprints["EPixelFormat"] }
+        };
 
         var result = ExportPlanner.Plan(PlanInputsFixture.Create(
             manifest: manifest,

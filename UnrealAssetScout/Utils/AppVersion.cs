@@ -5,9 +5,11 @@ using System.Reflection;
 namespace UnrealAssetScout.Utils;
 
 // The identity of the running build, read once at startup: its version, the git revisions it and
-// CUE4Parse were built from, and which release flavour produced it. Used by ConfigOptionsSupport
-// for --version, by Program for the log file header, and by Incremental.IncrementalRunner for the
-// manifest tool gate, so that every place reporting a version reports the same one.
+// CUE4Parse were built from, and which release flavour produced it. Used by BuildVersionAction for
+// --version, by Program for the log file header, by SelfUpdate to decide whether to update and by
+// UpdateCommand to report it, and by the incremental manifest: ManifestBuilder records DisplayText
+// as uasVersion and IncrementalRunner puts Cue4ParseGitSha in the tool gate's pair. Every place
+// that reports a version therefore reports the same one.
 internal static class AppVersion
 {
     private const string UnknownRevision = "unknown";
@@ -26,9 +28,6 @@ internal static class AppVersion
     internal static string UasGitSha { get; } = ReadMetadata("UasGitSha") ?? UnknownRevision;
 
     internal static string Cue4ParseGitSha { get; } = ReadMetadata("Cue4ParseGitSha") ?? UnknownRevision;
-
-    // The manifest tool gate matches this verbatim against what a manifest already records.
-    internal static string UasVersionText => $"{VersionText}+{UasGitSha}";
 
     // For example "0.3.0+1c9b714 (self-contained)".
     internal static string DisplayText => $"{VersionText}+{UasGitSha} ({BuildFlavor ?? "local build"})";
