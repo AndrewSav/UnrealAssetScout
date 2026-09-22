@@ -11,11 +11,12 @@ using UnrealAssetScout.Incremental;
 using UnrealAssetScout.Logging;
 using UnrealAssetScout.Package;
 using UnrealAssetScout.Statistics;
+using UnrealAssetScout.Utils;
 
 namespace UnrealAssetScout.Export;
 
-// Main export engine. Called from Program.Main for export runs. Iterates over all files in the
-// CUE4Parse provider, dispatches to mode-specific export logic, and drives the
+// Main export engine. Called from Program.Main for export runs. Iterates over every mounted path
+// once, as the provider resolves it, dispatches to mode-specific export logic, and drives the
 // CompactProgress display when active. When an incremental work list, constituent lookup and
 // SourceRecorder are supplied, restricts iteration to the work list and opens and closes a source
 // record around each processed file so the recorder can be handed to ManifestBuilder afterward.
@@ -44,7 +45,7 @@ public static class ExportProcessor
         var runStatsAccumulator = new RunStatsAccumulator(markUsmap);
         
         var totalWorkItems = 0;
-        var fileDecisions = provider.Files.Values
+        var fileDecisions = ProviderFiles.Resolved(provider)
             .Select(file =>
             {
                 var path = file.Path;

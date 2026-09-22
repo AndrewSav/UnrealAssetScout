@@ -5,6 +5,7 @@ using CUE4Parse.FileProvider;
 using UnrealAssetScout.Config;
 using UnrealAssetScout.Logging;
 using UnrealAssetScout.Package;
+using UnrealAssetScout.Utils;
 
 namespace UnrealAssetScout.List;
 
@@ -20,8 +21,9 @@ internal static class ListProcessor
         TextWriter? outputFileWriter = null,
         IReadOnlySet<string>? typeFilteredPaths = null)
     {
-        AppLog.Information("Found {Count} files", provider.Files.Count);
-        var matchingPaths = provider.Files.Keys
+        var files = ProviderFiles.Resolved(provider).ToList();
+        AppLog.Information("Found {Count} files", files.Count);
+        var matchingPaths = files.Select(file => file.Path)
             .Where(path =>
                 (options.Filter is null || options.Filter.IsMatch(path)) &&
                 (typeFilteredPaths is null || typeFilteredPaths.Contains(path)))
@@ -43,8 +45,9 @@ internal static class ListProcessor
             WriteOutputLine("Path,Type,Count", outputFileWriter);
 
         var listedFileIndex = 0;
-        foreach (var (path, file) in provider.Files)
+        foreach (var file in files)
         {
+            var path = file.Path;
             if ((options.Filter is not null && !options.Filter.IsMatch(path)) ||
                 (typeFilteredPaths is not null && !typeFilteredPaths.Contains(path)))
                 continue;

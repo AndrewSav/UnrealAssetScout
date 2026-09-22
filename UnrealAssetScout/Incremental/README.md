@@ -570,27 +570,18 @@ way, so a flip there is invisible to this rule because it genuinely cannot affec
 A few facts do not fit the question-and-answer list above but matter just as much, because nothing
 in the test suite fails automatically if they regress.
 
-**The source set must be built from resolved provider paths, never from the provider's raw
-per-container entries. PLAN holds to this; EXECUTE does not, and the gap is closed one step later
-instead.** A container dictionary yields an entry once per container that mounts a path, so a file
-present in both a base and a patch container appears twice, patch entry first, and the provider's
-own indexer resolves to whichever entry wins on lookup, which is not necessarily the one a naive
-fold over "every entry" would keep. PLAN's fingerprinting and source-set building both go through
-the same resolving indexer, so the fingerprint recorded is always the fingerprint of the file the
-provider itself resolves for that path, not an artifact of container enumeration order. Building
-either one from raw per-container entries instead would silently record a stale or a
-duplicate-keyed entry with no error at all.
-
-`ExportProcessor.ProcessFiles` does not share this property: it iterates `provider.Files.Values`
-directly, the same raw per-container sequence PLAN avoids, so a shadowed path is still opened and
-closed twice during EXECUTE, once per mounting container, producing two `SourceRecord`s for one
-path. Changing what `ExportProcessor` iterates is out of this feature's scope, so `IncrementalRunner`
-corrects the result afterward instead: it keeps only the first of the two records, which is the one
-from the same container the provider's own indexer (and therefore PLAN's fingerprint) resolves to,
-so the manifest's recorded metadata and its recorded fingerprint end up describing the same
-underlying file rather than mismatched copies. The residual gap is whatever only the other,
-discarded copy would have contributed, most notably a dependency present in that copy's import map
-but not the kept one's; see Known limitations.
+**Every walk over the mounted file set must go through `ProviderFiles.Resolved`, never the
+provider's raw per-container entries.** A container dictionary yields an entry once per container
+that mounts a path, so a file present in both a base and a patch container appears twice, patch
+entry first, and the provider's own indexer resolves to whichever entry wins on lookup, which is not
+necessarily the one a naive fold over "every entry" would keep. PLAN's fingerprinting and
+source-set building and EXECUTE's export loop all go through that resolving indexer, so the
+fingerprint recorded, the file exported and the metadata recorded for it all describe the copy the
+provider itself resolves for that path, not an artifact of container enumeration order. Walking the
+raw entries instead fails with no error at all: PLAN would record a stale or duplicate-keyed entry,
+and EXECUTE would export a shadowed path once per container, base copy last, leaving the unpatched
+file on disk. Tests cover the helper and the export loop, but nothing stops a new walk from
+bypassing it.
 
 **A dependency identity's own fingerprint must be recorded under the identity string itself, not
 only under whatever path it currently resolves to.** The staleness rule for a dependency compares
@@ -748,17 +739,6 @@ let the next run skip cheaply.
     which container a package's headers actually came from, and the only alternative that does
     would force-load every declared import just to enumerate them, which defeats the point of
     reading dependency identities without deserializing the packages they point at.
-12. For any path present in more than one mounted container, pak or IoStore, `ExportProcessor`
-    still opens and closes a source record once per mounting container, because it iterates the
-    provider's raw per-container entries rather than the resolved path set PLAN itself uses; see the
-    invariant entry above. `IncrementalRunner` keeps only the record from the container the provider
-    resolves the path to, matching the fingerprint recorded for it, so recorded metadata and the
-    recorded fingerprint always describe the same copy. What that discards is whatever only the
-    other, unresolved copy would have contributed: a dependency present in that copy's import map
-    but absent from the resolved one's goes unrecorded, and the same is true of any usmap type
-    consultation or CLR export type unique to that copy. This narrows the pre-existing IoStore-only
-    limitation above to a general one, and, like it, has no clean fix without changing what
-    `ExportProcessor` exports, which this feature does not do.
 
 Separately, and not something this feature fixes: CUE4Parse's own struct-lookup helper has no cycle
 guard, and the usmap format is flat and cannot express two distinct, namespaced structs sharing a

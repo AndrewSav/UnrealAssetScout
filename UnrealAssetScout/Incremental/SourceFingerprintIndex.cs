@@ -8,6 +8,7 @@ using CUE4Parse.UE4.Pak;
 using CUE4Parse.UE4.Pak.Objects;
 using CUE4Parse.UE4.Readers;
 using UnrealAssetScout.Logging;
+using UnrealAssetScout.Utils;
 
 namespace UnrealAssetScout.Incremental;
 
@@ -25,7 +26,7 @@ internal sealed class SourceFingerprintIndex
 
     internal static SourceFingerprintIndex Build(AbstractVfsFileProvider provider)
     {
-        var files = ResolvedFiles(provider).ToList();
+        var files = ProviderFiles.Resolved(provider).ToList();
         var pakFingerprints = ReadPakFingerprints(files);
         var ioStoreHashes = new Dictionary<IoStoreReader, IReadOnlyDictionary<FIoChunkId, string>>();
 
@@ -55,15 +56,6 @@ internal sealed class SourceFingerprintIndex
             byEntry[entries[index]] = fingerprints[index];
 
         return byEntry;
-    }
-
-    // FileProviderDictionary.Keys and Values both enumerate every mounted container's own path set
-    // in turn, highest read order first, so a path shadowed by a patch container is yielded once
-    // per container that mounts it, patch before base.
-    internal static IEnumerable<GameFile> ResolvedFiles(AbstractVfsFileProvider provider)
-    {
-        foreach (var path in new HashSet<string>(provider.Files.Keys, provider.PathComparer))
-            yield return provider.Files[path];
     }
 
     internal static SourceFingerprintIndex FromEntries(IEnumerable<(string Path, string? Fingerprint)> entries)

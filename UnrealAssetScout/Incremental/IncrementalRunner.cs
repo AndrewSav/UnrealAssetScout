@@ -57,7 +57,7 @@ internal static class IncrementalRunner
         stepWatch.Restart();
 
         var sources = SourceSetBuilder.Build(
-            SourceFingerprintIndex.ResolvedFiles(provider).Select(file => file.Path),
+            ProviderFiles.Resolved(provider).Select(file => file.Path),
             mode, options.Filter, typeFilteredPaths);
         var containers = provider.MountedVfs.Select(vfs => Path.GetFileName(vfs.Path)).Order().ToList();
         var sourceSetMillis = stepWatch.ElapsedMilliseconds;
@@ -128,13 +128,7 @@ internal static class IncrementalRunner
             constituentsOf: path => sources.TryGetValue(path, out var candidate) ? candidate.Constituents : null,
             audioDisambiguation: effectiveAudioDisambiguation);
 
-        // ExportProcessor iterates provider.Files.Values, which yields a shadowed path once per
-        // mounting container, so a source can be opened and closed twice for the same path. Keep
-        // only the first: FileProviderDictionary enumerates highest read order first and its own
-        // indexer resolves the same way, which is also what SourceFingerprintIndex resolved the
-        // fingerprint from, so keeping the first is what keeps recorded metadata and the recorded
-        // fingerprint describing the same underlying file.
-        var records = DeduplicateByPath(recorder.Records, provider.PathComparer).ToList();
+        var records = recorder.Records;
 
         foreach (var record in records)
             builder.AddRecorded(record);
@@ -263,21 +257,6 @@ internal static class IncrementalRunner
         RuntimeLogging.LogSummary(
             "Plan: recorded export times for the sources being updated total {Cost}",
             Formatting.FormatElapsed(TimeSpan.FromMilliseconds(statistics.UpdateCostMilliseconds)));
-    }
-
-    // Internal, not private, so it can be driven directly by plain SourceRecord fixtures with no
-    // live provider; see IncrementalRunnerRecordDeduplicationTests. The order of `records` matters:
-    // whichever comes first for a given path wins, which is only correct because the caller feeds
-    // it entries in the provider's own resolution order.
-    internal static IEnumerable<SourceRecord> DeduplicateByPath(
-        IEnumerable<SourceRecord> records, IEqualityComparer<string> pathComparer)
-    {
-        var seen = new HashSet<string>(pathComparer);
-        foreach (var record in records)
-        {
-            if (seen.Add(record.Path))
-                yield return record;
-        }
     }
 
     private static string? ResolvePackagePath(AbstractVfsFileProvider provider, string identity) =>
