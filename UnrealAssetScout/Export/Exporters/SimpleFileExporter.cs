@@ -3,7 +3,7 @@ using System.IO;
 using CUE4Parse.UE4.AssetRegistry;
 using CUE4Parse.UE4.Assets.Exports.Material;
 using CUE4Parse.UE4.BinaryConfig;
-using CUE4Parse.UE4.CriWare.Readers;
+using CUE4Parse.UE4.Criware.Readers;
 using CUE4Parse.UE4.FMod;
 using CUE4Parse.UE4.Localization;
 using CUE4Parse.UE4.Shaders;
